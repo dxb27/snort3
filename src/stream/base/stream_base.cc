@@ -27,7 +27,11 @@
 #include "flow/expect_cache.h"
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
+<<<<<<< Updated upstream
 <<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 #include "framework/data_bus.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -44,7 +48,11 @@
 #include "managers/inspector_manager.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
+<<<<<<< Updated upstream
 >>>>>>> offload
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 #include "stream_ha.h"
 #include "stream_module.h"
