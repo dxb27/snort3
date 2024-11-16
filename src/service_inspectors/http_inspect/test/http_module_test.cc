@@ -23,7 +23,11 @@
 #include "config.h"
 #endif
 
+<<<<<<< HEAD
 #include "helpers/literal_search.h"
+=======
+#include "detection/detection_engine.h"
+>>>>>>> offload
 #include "log/messages.h"
 
 #include "main/thread_config.h"
@@ -46,9 +50,13 @@ void ParseWarning(WarningGroup, const char*, ...) {}
 void ParseError(const char*, ...) {}
 
 void Value::get_bits(std::bitset<256ul>&) const {}
+<<<<<<< HEAD
 void Value::set_first_token() {}
 bool Value::get_next_csv_token(std::string&) { return false; }
 bool Value::get_next_token(std::string& ) { return false; }
+=======
+int DetectionEngine::queue_event(unsigned int, unsigned int, RuleType) { return 0; }
+>>>>>>> offload
 
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 LiteralSearch::Handle* LiteralSearch::setup() { return nullptr; }

@@ -24,6 +24,10 @@
 
 #include "modbus.h"
 
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "detection/detection_engine.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"

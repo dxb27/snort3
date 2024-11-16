@@ -33,5 +33,7 @@ snort::Packet* get_syn_ack_packet(snort::Flow*);
 
 void release_packet(snort::Packet*);
 
+void release_packet(Packet*);
+
 #endif
 

@@ -23,9 +23,12 @@
 
 #include "stats.h"
 
+<<<<<<< HEAD
 #include <cassert>
 #include <cmath>
 
+=======
+>>>>>>> offload
 #include "detection/detection_engine.h"
 #include "file_api/file_stats.h"
 #include "filters/sfthreshold.h"
@@ -125,6 +128,7 @@ static void timing_stats()
 
 const PegInfo pc_names[] =
 {
+<<<<<<< HEAD
     { CountType::NOW, "analyzed", "total packets processed" },
     { CountType::SUM, "hard_evals", "non-fast pattern rule evaluations" },
     { CountType::SUM, "raw_searches", "fast pattern searches in raw packet data" },
@@ -160,6 +164,29 @@ const PegInfo pc_names[] =
     { CountType::SUM, "cont_mismatch_distance", "total number of bytes jumped over by mismatched continuations"},
     { CountType::SUM, "buf_dumps", "total number of IPS buffers collected from matched rules" },
     { CountType::END, nullptr, nullptr }
+=======
+    { "analyzed", "packets sent to detection" },
+    { "hard evals", "non-fast pattern rule evaluations" },
+    { "raw searches", "fast pattern searches in raw packet data" },
+    { "cooked searches", "fast pattern searches in cooked packet data" },
+    { "pkt searches", "fast pattern searches in packet data" },
+    { "alt searches", "alt fast pattern searches in packet data" },
+    { "key searches", "fast pattern searches in key buffer" },
+    { "header searches", "fast pattern searches in header buffer" },
+    { "body searches", "fast pattern searches in body buffer" },
+    { "file searches", "fast pattern searches in file buffer" },
+    { "offloads", "fast pattern searches that were offloaded" },
+    { "alerts", "alerts not including IP reputation" },
+    { "total alerts", "alerts including IP reputation" },
+    { "logged", "logged packets" },
+    { "passed", "passed packets" },
+    { "match limit", "fast pattern matches not processed" },
+    { "queue limit", "events not queued because queue full" },
+    { "log limit", "events queued but not logged" },
+    { "event limit", "events filtered" },
+    { "alert limit", "events previously triggered on same PDU" },
+    { nullptr, nullptr }
+>>>>>>> offload
 };
 
 const PegInfo proc_names[] =

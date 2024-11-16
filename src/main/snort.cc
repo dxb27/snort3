@@ -30,13 +30,26 @@
 #include "actions/ips_actions.h"
 #include "codecs/codec_api.h"
 #include "connectors/connectors.h"
+<<<<<<< HEAD
 #include "detection/fp_config.h"
+=======
+#include "decompress/file_decomp.h"
+#include "detection/context_switcher.h"
+#include "detection/detect.h"
+#include "detection/detection_engine.h"
+#include "detection/detection_util.h"
+#include "detection/fp_config.h"
+#include "detection/fp_detect.h"
+#include "detection/ips_context.h"
+#include "detection/tag.h"
+>>>>>>> offload
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
 #include "filters/sfrf.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha.h"
+#include "framework/endianness.h"
 #include "framework/mpse.h"
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_cache_segmented.h"
@@ -97,6 +110,110 @@ using namespace std;
 static SnortConfig* snort_cmd_line_conf = nullptr;
 static pid_t snort_main_thread_pid = 0;
 
+<<<<<<< HEAD
+=======
+// non-local for easy access from core
+static THREAD_LOCAL DAQ_PktHdr_t s_pkth;
+static THREAD_LOCAL uint8_t s_data[65536];
+static THREAD_LOCAL Packet* s_packet = nullptr;
+static THREAD_LOCAL ContextSwitcher* s_switcher = nullptr;
+
+ContextSwitcher* Snort::get_switcher()
+{ return s_switcher; }
+
+//-------------------------------------------------------------------------
+// perf stats
+// FIXIT-M move these to appropriate modules
+//-------------------------------------------------------------------------
+
+static THREAD_LOCAL ProfileStats totalPerfStats;
+static THREAD_LOCAL ProfileStats metaPerfStats;
+
+static ProfileStats* get_profile(const char* key)
+{
+    if ( !strcmp(key, "detect") )
+        return &detectPerfStats;
+
+    if ( !strcmp(key, "mpse") )
+        return &mpsePerfStats;
+
+    if ( !strcmp(key, "rebuilt_packet") )
+        return &rebuiltPacketPerfStats;
+
+    if ( !strcmp(key, "rule_eval") )
+        return &rulePerfStats;
+
+    if ( !strcmp(key, "rtn_eval") )
+        return &ruleRTNEvalPerfStats;
+
+    if ( !strcmp(key, "rule_tree_eval") )
+        return &ruleOTNEvalPerfStats;
+
+    if ( !strcmp(key, "nfp_rule_tree_eval") )
+        return &ruleNFPEvalPerfStats;
+
+    if ( !strcmp(key, "decode") )
+        return &decodePerfStats;
+
+    if ( !strcmp(key, "eventq") )
+        return &eventqPerfStats;
+
+    if ( !strcmp(key, "total") )
+        return &totalPerfStats;
+
+    if ( !strcmp(key, "daq_meta") )
+        return &metaPerfStats;
+
+    return nullptr;
+}
+
+static void register_profiles()
+{
+    Profiler::register_module("detect", nullptr, get_profile);
+    Profiler::register_module("mpse", "detect", get_profile);
+    Profiler::register_module("rebuilt_packet", "detect", get_profile);
+    Profiler::register_module("rule_eval", "detect", get_profile);
+    Profiler::register_module("rtn_eval", "rule_eval", get_profile);
+    Profiler::register_module("rule_tree_eval", "rule_eval", get_profile);
+    Profiler::register_module("nfp_rule_tree_eval", "rule_eval", get_profile);
+    Profiler::register_module("decode", nullptr, get_profile);
+    Profiler::register_module("eventq", nullptr, get_profile);
+    Profiler::register_module("total", nullptr, get_profile);
+    Profiler::register_module("daq_meta", nullptr, get_profile);
+}
+
+//-------------------------------------------------------------------------
+// helpers
+//-------------------------------------------------------------------------
+
+static void pass_pkts(Packet*) { }
+static MainHook_f main_hook = pass_pkts;
+
+static void set_policy(Packet* p)  // FIXIT-M delete this?
+{
+    set_default_policy();
+    p->user_policy_id = get_ips_policy()->user_policy_id;
+}
+
+static void show_source(const char* pcap)
+{
+    if ( !SnortConfig::pcap_show() )
+        return;
+
+    if ( !strcmp(pcap, "-") )
+        pcap = "stdin";
+
+    static bool first = true;
+    if ( first )
+        first = false;
+    else
+        fprintf(stdout, "%s", "\n");
+
+    fprintf(stdout, "Reading network traffic from \"%s\" with snaplen = %u\n",
+        pcap, SFDAQ::get_snap_len());
+}
+
+>>>>>>> offload
 //-------------------------------------------------------------------------
 // initialization
 //-------------------------------------------------------------------------
@@ -570,9 +687,179 @@ SnortConfig* Snort::get_updated_policy(
 
         if ( uninitialized_trace )
         {
+<<<<<<< HEAD
             LogMessage("== WARNING: Trace module was not configured during "
                 "initial startup. Ignoring the new trace configuration.\n");
             sc->trace_config->clear();
+=======
+            s_pkth = *(s_packet->pkth);
+
+            if ( s_packet->pkt )
+            {
+                memcpy(s_data, s_packet->pkt, 0xFFFF & s_packet->pkth->caplen);
+                s_packet->pkt = s_data;
+            }
+        }
+    }
+}
+
+void Snort::thread_idle()
+{
+    Stream::timeout_flows(time(nullptr));
+    perf_monitor_idle_process();
+    aux_counts.idle++;
+    HighAvailabilityManager::process_receive();
+}
+
+void Snort::thread_rotate()
+{
+    SetRotatePerfFileFlag();
+}
+
+/*
+ * Perform all packet thread initialization actions that need to be taken with escalated privileges
+ * prior to starting the DAQ module.
+ */
+bool Snort::thread_init_privileged(const char* intf)
+{
+    show_source(intf);
+
+    snort_conf->thread_config->implement_thread_affinity(STHREAD_TYPE_PACKET, get_instance_id());
+
+    // FIXIT-M the start-up sequence is a little off due to dropping privs
+    SFDAQInstance *daq_instance = new SFDAQInstance(intf);
+    SFDAQ::set_local_instance(daq_instance);
+    if (!daq_instance->configure(snort_conf))
+        return false;
+
+    return true;
+}
+
+/*
+ * Perform all packet thread initialization actions that can be taken with dropped privileges
+ * and/or must be called after the DAQ module has been started.
+ */
+void Snort::thread_init_unprivileged()
+{
+    // using dummy values until further integration
+    const unsigned max_contexts = 20;
+
+    s_switcher = new ContextSwitcher(max_contexts);
+
+    for ( unsigned i = 0; i < max_contexts; ++i )
+        s_switcher->push(new IpsContext);
+
+    CodecManager::thread_init(snort_conf);
+
+    // this depends on instantiated daq capabilities
+    // so it is done here instead of init()
+    Active::init(snort_conf);
+
+    InitTag();
+    EventTrace_Init();
+    detection_filter_init(snort_conf->detection_filter_config);
+    DetectionEngine::thread_init();
+
+    EventManager::open_outputs();
+    IpsManager::setup_options();
+    ActionManager::thread_init(snort_conf);
+    FileService::thread_init();
+    SideChannelManager::thread_init();
+    HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
+    InspectorManager::thread_init(snort_conf);
+
+    // in case there are HA messages waiting, process them first
+    HighAvailabilityManager::process_receive();
+}
+
+void Snort::thread_term()
+{
+    HighAvailabilityManager::thread_term_beginning();
+
+    if ( !snort_conf->dirty_pig )
+        Stream::purge_flows();
+
+    DetectionEngine::idle();
+    InspectorManager::thread_stop(snort_conf);
+    ModuleManager::accumulate(snort_conf);
+    InspectorManager::thread_term(snort_conf);
+    ActionManager::thread_term(snort_conf);
+
+    IpsManager::clear_options();
+    EventManager::close_outputs();
+    CodecManager::thread_term();
+    HighAvailabilityManager::thread_term();
+    SideChannelManager::thread_term();
+
+    s_packet = nullptr;
+
+    SFDAQInstance *daq_instance = SFDAQ::get_local_instance();
+    if ( daq_instance->was_started() )
+        daq_instance->stop();
+    SFDAQ::set_local_instance(nullptr);
+    delete daq_instance;
+
+    PacketLatency::tterm();
+    RuleLatency::tterm();
+
+    Profiler::consolidate_stats();
+
+    DetectionEngine::thread_term();
+    detection_filter_term();
+    EventTrace_Term();
+    CleanupTag();
+    FileService::thread_term();
+
+    Active::term();
+    delete s_switcher;
+}
+
+void Snort::inspect(Packet* p)
+{
+    // Need to include this b/c call is outside the detect tree
+    Profile detect_profile(detectPerfStats);
+    Profile rebuilt_profile(rebuiltPacketPerfStats);
+
+    DetectionEngine de;
+    main_hook(p);
+
+    if ( DetectionEngine::offloaded(p) )
+        return;
+
+    clear_file_data();  // FIXIT-H get rid of this
+}
+
+DAQ_Verdict Snort::process_packet(
+    Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt, bool is_frag)
+{
+    PacketManager::decode(p, pkthdr, pkt);
+    assert(p->pkth && p->pkt);
+
+    if (is_frag)
+    {
+        p->packet_flags |= (PKT_PSEUDO | PKT_REBUILT_FRAG);
+        p->pseudo_type = PSEUDO_PKT_IP;
+    }
+
+    set_policy(p);  // FIXIT-M should not need this here
+
+    if ( !(p->packet_flags & PKT_IGNORE) )
+    {
+        clear_file_data();
+        main_hook(p);
+    }
+
+    // process flow verdicts here
+    if ( Active::session_was_blocked() )
+    {
+        if ( !Active::can_block() )
+            return DAQ_VERDICT_PASS;
+
+        if ( Active::get_tunnel_bypass() )
+        {
+            aux_counts.internal_blacklist++;
+            return DAQ_VERDICT_PASS;
+>>>>>>> offload
         }
 
         if ( ModuleManager::get_errors() || !sc->verify() )
@@ -656,3 +943,45 @@ TEST_CASE("Check process ID handling", "[snort_process_id]")
 
 #endif
 
+<<<<<<< HEAD
+=======
+    pc.total_from_daq++;
+    packet_time_update(&pkthdr->ts);
+
+    if ( snort_conf->pkt_skip && pc.total_from_daq <= snort_conf->pkt_skip )
+        return DAQ_VERDICT_PASS;
+
+    s_switcher->start();
+    s_packet = s_switcher->get_context()->packet;
+    s_switcher->get_context()->pkt_count++;
+
+    sfthreshold_reset();
+    ActionManager::reset_queue();
+
+    DAQ_Verdict verdict = process_packet(s_packet, pkthdr, pkt);
+    ActionManager::execute(s_packet);
+
+    int inject = 0;
+    verdict = update_verdict(verdict, inject);
+
+    // FIXIT-H move this to the appropriate struct
+    //perfBase->UpdateWireStats(pkthdr->caplen, Active::packet_was_dropped(), inject);
+    HighAvailabilityManager::process_update(s_packet->flow, pkthdr);
+
+    Active::reset();
+    Stream::timeout_flows(pkthdr->ts.tv_sec);
+    HighAvailabilityManager::process_receive();
+
+    s_packet->pkth = nullptr;  // no longer avail upon sig segv
+
+    if ( snort_conf->pkt_cnt && pc.total_from_daq >= snort_conf->pkt_cnt )
+        SFDAQ::break_loop(-1);
+
+    else if ( break_time() )
+        SFDAQ::break_loop(0);
+
+    s_switcher->stop();
+
+    return verdict;
+}
+>>>>>>> offload

@@ -23,8 +23,11 @@
 
 #include "stream_splitter.h"
 
+<<<<<<< HEAD
 #include <algorithm>
 
+=======
+>>>>>>> offload
 #include "detection/detection_engine.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"
@@ -32,18 +35,25 @@
 #include "flush_bucket.h"
 #include "stream.h"
 
+<<<<<<< HEAD
 using namespace snort;
 
+=======
+>>>>>>> offload
 unsigned StreamSplitter::max(Flow*)
 { return SnortConfig::get_conf()->max_pdu; }
 
+<<<<<<< HEAD
 uint16_t StreamSplitter::get_flush_bucket_size()
 { return FlushBucket::get_size(); }
 
+=======
+>>>>>>> offload
 const StreamBuffer StreamSplitter::reassemble(
     Flow*, unsigned, unsigned offset, const uint8_t* p,
     unsigned n, uint32_t flags, unsigned& copied)
 {
+<<<<<<< HEAD
     if (n == 0)
         return { nullptr, 0 };
 
@@ -63,6 +73,12 @@ const StreamBuffer StreamSplitter::reassemble(
             should it be adjusted with --snaplen {68:65535}?
     */
 
+=======
+    unsigned max;
+    uint8_t* pdu_buf = DetectionEngine::get_buffer(max);
+
+    assert(offset + n < max);
+>>>>>>> offload
     memcpy(pdu_buf+offset, p, n);
     copied = n;
 

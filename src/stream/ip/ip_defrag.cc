@@ -70,6 +70,10 @@
 
 #include "ip_defrag.h"
 
+<<<<<<< HEAD
+=======
+#include "detection/detect.h"
+>>>>>>> offload
 #include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "main/analyzer.h"
@@ -81,6 +85,7 @@
 #include "time/timersub.h"
 #include "trace/trace_api.h"
 #include "utils/safec.h"
+#include "utils/stats.h"
 #include "utils/util.h"
 
 #include "ip_session.h"
@@ -115,7 +120,10 @@ using namespace snort;
 
 /*  D A T A   S T R U C T U R E S  **********************************/
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> offload
 struct Fragment
 {
     Fragment(uint16_t flen, const uint8_t* fptr, int ord)
@@ -179,6 +187,35 @@ static const char* const frag_policy_names[] =
     "solaris"
 };
 
+<<<<<<< HEAD
+=======
+// FIXIT-M convert to session memcap
+static THREAD_LOCAL unsigned long mem_in_use = 0; /* memory in use, used for self pres */
+
+THREAD_LOCAL ProfileStats fragPerfStats;
+THREAD_LOCAL ProfileStats fragInsertPerfStats;
+THREAD_LOCAL ProfileStats fragRebuildPerfStats;
+
+static void FragPrintEngineConfig(FragEngine* engine)
+{
+    LogMessage("Defrag engine config:\n");
+    LogMessage("    engine-based policy: %s\n",
+        frag_policy_names[engine->frag_policy]);
+    LogMessage("    Fragment timeout: %d seconds\n",
+        engine->frag_timeout);
+    LogMessage("    Fragment min_ttl:   %d\n", engine->min_ttl);
+
+    LogMessage("    Max frags: %d\n", engine->max_frags);
+    LogMessage("    Max overlaps:     %d\n",
+        engine->max_overlaps);
+    LogMessage("    Min fragment Length:     %d\n",
+        engine->min_fragment_length);
+#ifdef REG_TEST
+    LogMessage("    FragTracker Size: %zu\n", sizeof(FragTracker));
+#endif
+}
+
+>>>>>>> offload
 static inline void EventAnomIpOpts(FragEngine*)
 {
     DetectionEngine::queue_event(GID_DEFRAG, DEFRAG_IPOPTIONS);
@@ -255,7 +292,11 @@ static inline bool frag_timed_out(
     const timeval* current_time, const timeval* start_time, FragEngine* engine)
 {
     struct timeval tv_diff;
+<<<<<<< HEAD
     TIMERSUB(current_time, start_time, &tv_diff);   // cppcheck-suppress unreadVariable
+=======
+    TIMERSUB(current_time, start_time, &tv_diff);
+>>>>>>> offload
 
     if (tv_diff.tv_sec >= (int)engine->frag_timeout)
         return true;
@@ -569,6 +610,7 @@ static inline int FragIsComplete(FragTracker* ft)
  */
 static void FragRebuild(FragTracker* ft, Packet* p)
 {
+<<<<<<< HEAD
     size_t offset = 0;
 
     Packet* dpkt = DetectionEngine::set_next_packet(p);
@@ -576,6 +618,16 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 
     // the encoder ensures enough space for a maximum datagram
     uint8_t* rebuild_ptr = const_cast<uint8_t*>(dpkt->data);
+=======
+    Profile profile(fragRebuildPerfStats);
+    size_t offset = 0;
+
+    Packet* dpkt = DetectionEngine::set_packet();
+    PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP);
+
+    // the encoder ensures enough space for a maximum datagram
+    uint8_t* rebuild_ptr = (uint8_t*)dpkt->data;
+>>>>>>> offload
 
     if (p->ptrs.ip_api.is_ip4())
     {
@@ -713,10 +765,17 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 
     DetectionEngine de;
     de.set_encode_packet(p);
+<<<<<<< HEAD
     Analyzer::get_local_analyzer()->process_rebuilt_packet(dpkt, dpkt->pkth, dpkt->pkt, dpkt->pktlen);
     de.set_encode_packet(nullptr);
 
     debug_log(stream_ip_trace, p, "Done with rebuilt packet, marking rebuilt...\n");
+=======
+    Snort::process_packet(dpkt, dpkt->pkth, dpkt->pkt, true);
+    de.set_encode_packet(nullptr);
+
+    trace_log(stream_ip, "Done with rebuilt packet, marking rebuilt...\n");
+>>>>>>> offload
 
     ft->frag_flags |= FRAG_REBUILT;
 }
@@ -756,6 +815,24 @@ static inline void add_node(FragTracker* ft, Fragment* prev, Fragment* node)
     ft->fraglist_count++;
 }
 
+<<<<<<< HEAD
+=======
+static void delete_frag(Fragment* frag)
+{
+    /*
+     * delete the fragment either in prealloc or dynamic mode
+     */
+    snort_free(frag->fptr);
+    mem_in_use -= frag->flen;
+
+    snort_free(frag);
+    mem_in_use -= sizeof(Fragment);
+
+    ip_stats.mem_in_use = mem_in_use;
+    ip_stats.nodes_released++;
+}
+
+>>>>>>> offload
 static inline void delete_node(FragTracker* ft, Fragment* node)
 {
     debug_logf(stream_ip_trace, nullptr, "Deleting list node %p (p %p n %p)\n",
@@ -833,6 +910,7 @@ bool Defrag::configure(SnortConfig* sc)
     return true;
 }
 
+<<<<<<< HEAD
 void Defrag::show() const
 {
     ConfigLogger::log_value("max_frags", engine.max_frags);
@@ -840,6 +918,11 @@ void Defrag::show() const
     ConfigLogger::log_value("min_frag_length", engine.min_fragment_length);
     ConfigLogger::log_value("min_ttl", engine.min_ttl);
     ConfigLogger::log_value("policy", frag_policy_names[engine.frag_policy]);
+=======
+void Defrag::show(SnortConfig*)
+{
+    FragPrintEngineConfig(&engine);
+>>>>>>> offload
 }
 
 void Defrag::cleanup(FragTracker* ft)
@@ -910,7 +993,13 @@ void Defrag::process(Packet* p, FragTracker* ft)
     }
 
     ip_stats.total++;
+<<<<<<< HEAD
     ip_stats.fragmented_bytes += p->pktlen + 4; /* 4 for the CRC */
+=======
+    ip_stats.fragmented_bytes += p->pkth->caplen + 4; /* 4 for the CRC */
+
+    Profile profile(fragPerfStats);
+>>>>>>> offload
 
     if (!ft->engine )
     {
@@ -939,7 +1028,11 @@ void Defrag::process(Packet* p, FragTracker* ft)
     if ( ft->frag_flags & FRAG_DROP_FRAGMENTS )
     {
         DetectionEngine::disable_content(p);
+<<<<<<< HEAD
         p->active->daq_drop_packet(p);
+=======
+        Active::daq_drop_packet(p);
+>>>>>>> offload
         ip_stats.drops++;
     }
 
@@ -1015,7 +1108,20 @@ void Defrag::process(Packet* p, FragTracker* ft)
         if (!(ft->frag_flags & FRAG_BAD))
             FragRebuild(ft, p);
 
+<<<<<<< HEAD
         if ( p->active->packet_was_dropped() )
+=======
+            if (frag_offset != 0 ||
+                (p->get_ip_proto_next() != IpProtocol::UDP && ft->frag_flags & FRAG_REBUILT))
+            {
+                // Need to reset some things here because the rebuilt packet
+                // will have reset the do_detect flag when it hits Inspect.
+                DetectionEngine::disable_all(p);
+            }
+        }
+
+        if (Active::packet_was_dropped())
+>>>>>>> offload
         {
             ft->frag_flags |= FRAG_DROP_FRAGMENTS;
             delete_tracker(ft);
@@ -1385,7 +1491,11 @@ left_overlap_last:
         }
     }
 
+<<<<<<< HEAD
     if ((uint16_t)fragLength > p->context->conf->daq_config->get_mru_size())
+=======
+    if ((uint16_t)fragLength > SFDAQ::get_snap_len())
+>>>>>>> offload
     {
         debug_logf(stream_ip_trace, p, "Overly large fragment %d 0x%x 0x%x %d\n",
             fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
@@ -1743,7 +1853,11 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     fragStart = p->data;
 
     /* Just to double check */
+<<<<<<< HEAD
     if (!fragLength or fragLength > p->context->conf->daq_config->get_mru_size())
+=======
+    if (fragLength > SFDAQ::get_snap_len())
+>>>>>>> offload
     {
         debug_logf(stream_ip_trace, p, "Bad fragment length:%d(0x%x) off:0x%x(%d)\n",
             fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),

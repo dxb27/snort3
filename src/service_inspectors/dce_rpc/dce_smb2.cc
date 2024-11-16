@@ -95,7 +95,385 @@ DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
     {
         if (h.second->ftracker_tcp)
         {
+<<<<<<< HEAD
             if (h.second->ftracker_tcp == this)
+=======
+            return;
+        }
+    }
+
+    DCE2_ListInsert(ssd->tids, (void*)(uintptr_t)tid, (void*)(uintptr_t)share_type);
+}
+
+static DCE2_Ret DCE2_Smb2FindTid(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr)
+{
+    /* Still process async commands*/
+    if (alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND)
+        return DCE2_RET__SUCCESS;
+
+    return DCE2_ListFindKey(ssd->tids, (void*)(uintptr_t)Smb2Tid(smb_hdr));
+}
+
+static inline void DCE2_Smb2RemoveTid(DCE2_SmbSsnData* ssd, const uint32_t tid)
+{
+    DCE2_ListRemove(ssd->tids, (void*)(uintptr_t)tid);
+}
+
+static inline void DCE2_Smb2StoreRequest(DCE2_SmbSsnData* ssd,
+    uint64_t message_id, uint64_t offset, uint64_t file_id)
+{
+    Smb2Request* request = ssd->smb2_requests;
+    ssd->max_outstanding_requests = 128; /* windows client max */
+
+    while (request)
+    {
+        if (request->message_id == message_id)
+            return;
+        request = request->next;
+    }
+
+    request = (Smb2Request*)snort_calloc(sizeof(*request));
+
+    ssd->outstanding_requests++;
+
+    if (ssd->outstanding_requests >= ssd->max_outstanding_requests)
+    {
+        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats);
+        snort_free((void*)request);
+        return;
+    }
+
+    request->message_id = message_id;
+    request->offset = offset;
+    request->file_id = file_id;
+
+    request->next = ssd->smb2_requests;
+    request->previous = nullptr;
+    if (ssd->smb2_requests)
+        ssd->smb2_requests->previous = request;
+    ssd->smb2_requests = request;
+}
+
+static inline Smb2Request* DCE2_Smb2GetRequest(DCE2_SmbSsnData* ssd,
+    uint64_t message_id)
+{
+    Smb2Request* request = ssd->smb2_requests;
+    while (request)
+    {
+        if (request->message_id == message_id)
+            return request;
+        request = request->next;
+    }
+
+    return nullptr;
+}
+
+static inline void DCE2_Smb2RemoveRequest(DCE2_SmbSsnData* ssd,
+    Smb2Request* request)
+{
+    if (request->previous)
+    {
+        request->previous->next = request->next;
+    }
+
+    if (request->next)
+    {
+        request->next->previous = request->previous;
+    }
+
+    if (request == ssd->smb2_requests)
+    {
+        ssd->smb2_requests =  request->next;
+    }
+
+    ssd->outstanding_requests--;
+    snort_free((void*)request);
+}
+
+static inline void DCE2_Smb2FreeFileName(DCE2_SmbFileTracker* ftracker)
+{
+    if (ftracker->file_name)
+    {
+        snort_free((void*)ftracker->file_name);
+        ftracker->file_name = nullptr;
+    }
+    ftracker->file_name_size = 0;
+}
+
+static inline void DCE2_Smb2ResetFileName(DCE2_SmbFileTracker* ftracker)
+{
+    // FIXIT-L remove snort_free once file cache is ported.
+    if (ftracker->file_name)
+    {
+        snort_free((void*)ftracker->file_name);
+    }
+    ftracker->file_name = nullptr;
+    ftracker->file_name_size = 0;
+}
+
+static inline FileContext* get_file_context(DCE2_SmbSsnData* ssd, uint64_t file_id)
+{
+    assert(ssd->sd.wire_pkt);
+    FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
+    assert(file_flows);
+    return file_flows->get_file_context(file_id, true);
+}
+
+static inline void DCE2_Smb2ProcessFileData(DCE2_SmbSsnData* ssd, const uint8_t* file_data,
+    uint32_t data_size, FileDirection dir)
+{
+    int64_t file_detection_depth = DCE2_ScSmbFileDepth((dce2SmbProtoConf*)ssd->sd.config);
+    int64_t detection_size = 0;
+
+    if (file_detection_depth == 0)
+        detection_size = data_size;
+    else if ( ssd->ftracker.tracker.file.file_offset < (uint64_t)file_detection_depth)
+    {
+        if ( file_detection_depth - ssd->ftracker.tracker.file.file_offset < data_size )
+            detection_size = file_detection_depth - ssd->ftracker.tracker.file.file_offset;
+        else
+            detection_size = data_size;
+    }
+
+    if (detection_size)
+    {
+        set_file_data(file_data,
+            (detection_size > UINT16_MAX) ? UINT16_MAX : (uint16_t)detection_size);
+
+        DCE2_FileDetect();
+    }
+
+    assert(ssd->sd.wire_pkt);
+    FileFlows* file_flows = FileFlows::get_file_flows((ssd->sd.wire_pkt)->flow);
+
+    file_flows->file_process(ssd->ftracker.fid_v2, file_data, data_size,
+        ssd->ftracker.tracker.file.file_offset, dir);
+}
+
+/********************************************************************
+ *
+ * Process tree connect command
+ * Share type is defined here
+ *
+ ********************************************************************/
+static void DCE2_Smb2TreeConnect(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
+    uint8_t* smb_data, const uint8_t* end)
+{
+    /* Using structure size to decide whether it is response or request*/
+    uint16_t structure_size;
+    Smb2TreeConnectResponseHdr* smb_tree_connect_hdr = (Smb2TreeConnectResponseHdr*)smb_data;
+
+    if ((const uint8_t*)smb_tree_connect_hdr + SMB2_TREE_CONNECT_RESPONSE_STRUC_SIZE > end)
+        return;
+
+    structure_size = alignedNtohs(&(smb_tree_connect_hdr->structure_size));
+
+    if (structure_size == SMB2_TREE_CONNECT_RESPONSE_STRUC_SIZE)
+    {
+        DCE2_Smb2InsertTid(ssd, Smb2Tid(smb_hdr), smb_tree_connect_hdr->share_type);
+    }
+}
+
+/********************************************************************
+ *
+ * Process tree connect command
+ * Share type is defined here
+ *
+ ********************************************************************/
+static void DCE2_Smb2TreeDisconnect(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
+    uint8_t* smb_data, const uint8_t* end)
+{
+    /* Using structure size to decide whether it is response or request*/
+    uint16_t structure_size;
+    Smb2TreeDisConnectHdr* smb_tree_disconnect_hdr = (Smb2TreeDisConnectHdr*)smb_data;
+
+    if ((const uint8_t*)smb_tree_disconnect_hdr + SMB2_TREE_DISCONNECT_STRUC_SIZE > end)
+        return;
+
+    structure_size = alignedNtohs(&(smb_tree_disconnect_hdr->structure_size));
+
+    if (structure_size == SMB2_TREE_DISCONNECT_STRUC_SIZE)
+    {
+        DCE2_Smb2RemoveTid(ssd, Smb2Tid(smb_hdr));
+    }
+}
+
+/********************************************************************
+ *
+ * Process create request, first command for a file processing
+ * Update file name
+ *
+ ********************************************************************/
+static void DCE2_Smb2CreateRequest(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
+    Smb2CreateRequestHdr* smb_create_hdr,const uint8_t* end)
+{
+    uint16_t name_offset = alignedNtohs(&(smb_create_hdr->name_offset));
+    DebugMessage(DEBUG_DCE_SMB, "Processing create request command!\n");
+    DCE2_Smb2InitFileTracker(&ssd->ftracker, false, 0);
+
+    if (name_offset > SMB2_HEADER_LENGTH)
+    {
+        uint16_t size;
+        uint8_t* file_data =  (uint8_t*)smb_create_hdr + smb_create_hdr->name_offset -
+            SMB2_HEADER_LENGTH;
+        if (file_data >= end)
+            return;
+        size = alignedNtohs(&(smb_create_hdr->name_length));
+        if (!size || (file_data + size > end))
+            return;
+        if (ssd->ftracker.file_name)
+        {
+            snort_free((void*)ssd->ftracker.file_name);
+        }
+        ssd->ftracker.file_name = DCE2_Smb2GetFileName(file_data, size, true, false);
+        if (ssd->ftracker.file_name)
+            ssd->ftracker.file_name_size = strlen(ssd->ftracker.file_name);
+    }
+}
+
+/********************************************************************
+ *
+ * Process create response, need to update file id
+ * For downloading, file size is decided here
+ *
+ ********************************************************************/
+static void DCE2_Smb2CreateResponse(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
+    Smb2CreateResponseHdr* smb_create_hdr, const uint8_t*)
+{
+    uint64_t fileId_persistent;
+    uint64_t file_size = UNKNOWN_FILE_SIZE;
+    DebugMessage(DEBUG_DCE_SMB, "Processing create response command!\n");
+
+    fileId_persistent = alignedNtohq((const uint64_t*)(&(smb_create_hdr->fileId_persistent)));
+    ssd->ftracker.fid_v2 = fileId_persistent;
+    if (smb_create_hdr->end_of_file)
+    {
+        file_size = alignedNtohq((const uint64_t*)(&(smb_create_hdr->end_of_file)));
+        DebugFormat(DEBUG_DCE_SMB, "Get file size %" PRIu64 "!\n", file_size);
+        ssd->ftracker.tracker.file.file_size = file_size;
+    }
+
+    if (ssd->ftracker.file_name && ssd->ftracker.file_name_size)
+    {
+        FileContext* file = get_file_context(ssd, ssd->ftracker.fid_v2);
+        if (file)
+        {
+            file->set_file_size(file_size);
+            file->set_file_name(ssd->ftracker.file_name, ssd->ftracker.file_name_size);
+        }
+    }
+    DCE2_Smb2ResetFileName(&(ssd->ftracker));
+}
+
+/********************************************************************
+ *
+ * Process create command
+ *
+ ********************************************************************/
+static void DCE2_Smb2Create(DCE2_SmbSsnData* ssd, const Smb2Hdr* smb_hdr,
+    uint8_t* smb_data, const uint8_t* end)
+{
+    uint16_t structure_size;
+    Smb2CreateRequestHdr* smb_create_hdr = (Smb2CreateRequestHdr*)smb_data;
+
+    structure_size = alignedNtohs(&(smb_create_hdr->structure_size));
+
+    /* Using structure size to decide whether it is response or request */
+    if (structure_size == SMB2_CREATE_REQUEST_STRUC_SIZE)
+    {
+        if ((const uint8_t*)smb_create_hdr + SMB2_CREATE_REQUEST_STRUC_SIZE - 1 > end)
+            return;
+        DCE2_Smb2CreateRequest(ssd, smb_hdr, (Smb2CreateRequestHdr*)smb_create_hdr, end);
+    }
+    else if (structure_size == SMB2_CREATE_RESPONSE_STRUC_SIZE)
+    {
+        if ((const uint8_t*)smb_create_hdr + SMB2_CREATE_RESPONSE_STRUC_SIZE -1 > end)
+            return;
+        DCE2_Smb2CreateResponse(ssd, smb_hdr, (Smb2CreateResponseHdr*)smb_create_hdr, end);
+    }
+    else if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE)
+    {
+        Smb2ErrorResponseHdr* smb_err_response_hdr = (Smb2ErrorResponseHdr*)smb_data;
+        if ((const uint8_t*)smb_create_hdr + SMB2_ERROR_RESPONSE_STRUC_SIZE - 1 > end)
+            return;
+        /* client will ignore when byte count is 0 */
+        if (smb_err_response_hdr->byte_count)
+        {
+            /*Response error, clean up request state*/
+            DCE2_Smb2FreeFileName(&(ssd->ftracker));
+        }
+    }
+    else
+    {
+        DebugMessage(DEBUG_DCE_SMB, "Wrong format for smb create command!\n");
+    }
+}
+
+/********************************************************************
+ *
+ * Process close command
+ * For some upload, file_size is decided here.
+ *
+ ********************************************************************/
+static void DCE2_Smb2CloseCmd(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
+    uint8_t* smb_data, const uint8_t* end)
+{
+    /* Using structure size to decide whether it is response or request*/
+    uint16_t structure_size;
+    Smb2CloseRequestHdr* smb_close_hdr = (Smb2CloseRequestHdr*)smb_data;
+
+    if ((const uint8_t*)smb_close_hdr + SMB2_CLOSE_REQUEST_STRUC_SIZE > end)
+        return;
+
+    structure_size = alignedNtohs(&(smb_close_hdr->structure_size));
+
+    if ((structure_size == SMB2_CLOSE_REQUEST_STRUC_SIZE) &&
+        !ssd->ftracker.tracker.file.file_size
+        && ssd->ftracker.tracker.file.file_offset)
+    {
+        FileDirection dir = DCE2_SsnFromClient(ssd->sd.wire_pkt) ? FILE_UPLOAD : FILE_DOWNLOAD;
+        ssd->ftracker.tracker.file.file_size = ssd->ftracker.tracker.file.file_offset;
+        uint64_t fileId_persistent = alignedNtohq(&(smb_close_hdr->fileId_persistent));
+        FileContext* file = get_file_context(ssd, fileId_persistent);
+        if (file)
+        {
+            file->set_file_size(ssd->ftracker.tracker.file.file_size);
+        }
+
+        DCE2_Smb2ProcessFileData(ssd, nullptr, 0, dir);
+    }
+}
+
+/********************************************************************
+ *
+ * Process set info command
+ * For upload, file_size is decided here.
+ *
+ ********************************************************************/
+static void DCE2_Smb2SetInfo(DCE2_SmbSsnData* ssd, const Smb2Hdr*,
+    uint8_t* smb_data, const uint8_t* end)
+{
+    /* Using structure size to decide whether it is response or request*/
+    uint16_t structure_size;
+    Smb2SetInfoRequestHdr* smb_set_info_hdr = (Smb2SetInfoRequestHdr*)smb_data;
+
+    if ((const uint8_t*)smb_set_info_hdr + SMB2_SET_INFO_REQUEST_STRUC_SIZE > end)
+        return;
+
+    structure_size = alignedNtohs(&(smb_set_info_hdr->structure_size));
+
+    if (structure_size == SMB2_SET_INFO_REQUEST_STRUC_SIZE)
+    {
+        uint8_t* file_data =  (uint8_t*)smb_set_info_hdr + SMB2_SET_INFO_REQUEST_STRUC_SIZE - 1;
+        if (smb_set_info_hdr->file_info_class == SMB2_FILE_ENDOFFILE_INFO)
+        {
+            uint64_t file_size = alignedNtohq((const uint64_t*)file_data);
+            DebugFormat(DEBUG_DCE_SMB, "Get file size %" PRIu64 "!\n", file_size);
+            ssd->ftracker.tracker.file.file_size = file_size;
+            uint64_t fileId_persistent = alignedNtohq(&(smb_set_info_hdr->fileId_persistent));
+            FileContext* file = get_file_context(ssd, fileId_persistent);
+            if (file)
+>>>>>>> offload
             {
                 h.second->ftracker_tcp = nullptr;
                 h.second->ftracker_local = nullptr;
@@ -464,11 +842,34 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
     Packet* p = DetectionEngine::get_current_packet();
     const uint8_t* data_ptr = p->data;
     uint16_t data_len = p->dsize;
+<<<<<<< HEAD
     // Process the header
     if (p->is_pdu_start())
     {
         // Check header length
         if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
+=======
+
+    if (!FileService::is_file_service_enabled())
+        return;
+
+    /*Check header length*/
+    if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
+        return;
+
+    if (!ssd->ftracker.is_smb2)
+    {
+        DCE2_Smb2InitFileTracker(&(ssd->ftracker), 0, 0);
+    }
+
+    /* Process the header */
+    if (p->is_pdu_start())
+    {
+        uint32_t next_command_offset;
+        Smb2Hdr* smb_hdr = (Smb2Hdr*)(data_ptr + sizeof(NbssHdr));
+        next_command_offset = alignedNtohl(&(smb_hdr->next_command));
+        if (next_command_offset + sizeof(NbssHdr) > p->dsize)
+>>>>>>> offload
         {
             dce2_smb_stats.v2_hdr_err++;
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,

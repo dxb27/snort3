@@ -25,8 +25,14 @@
 
 #include <cassert>
 
+<<<<<<< HEAD:src/network_inspectors/extractor/extractor_logger.cc
 #include "extractor_csv_logger.h"
 #include "extractor_json_logger.h"
+=======
+#include "detection/detection_engine.h"
+#include "events/event_queue.h"
+#include "main/thread.h"
+>>>>>>> offload:extra/src/inspectors/http_server/hi_events.cc
 
 ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, OutputType o_type)
 {
@@ -34,8 +40,22 @@ ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, OutputType o_ty
 
     switch (f_type)
     {
+<<<<<<< HEAD:src/network_inspectors/extractor/extractor_logger.cc
     case FormatType::CSV:
         logger = new CsvExtractorLogger(o_type);
+=======
+        DetectionEngine::queue_event(gid, sid);
+        mask ^= (1 << (sid-1));
+    }
+}
+
+void hi_set_event(unsigned gid, unsigned sid)
+{
+    switch ( gid )
+    {
+    case GID_HTTP_CLIENT:
+        set(gid_client, sid);
+>>>>>>> offload:extra/src/inspectors/http_server/hi_events.cc
         break;
     case FormatType::JSON:
         logger = new JsonExtractorLogger(o_type);

@@ -42,19 +42,38 @@
 #include "stream/stream.h"
 #include "utils/stats.h"
 
+<<<<<<< HEAD
+=======
+#include "detection_defines.h"
+>>>>>>> offload
 #include "detection_engine.h"
 #include "fp_detect.h"
 #include "rules.h"
 #include "tag.h"
 #include "treenodes.h"
 
+<<<<<<< HEAD
 using namespace snort;
 
+=======
+THREAD_LOCAL ProfileStats detectPerfStats;
+>>>>>>> offload
 THREAD_LOCAL ProfileStats eventqPerfStats;
 
+<<<<<<< HEAD
 bool snort_ignore(Packet*) { return true; }
 
 bool snort_log(Packet* p)
+=======
+static THREAD_LOCAL bool check_tags_flag = false;
+
+void enable_tags()
+{ check_tags_flag = true; }
+
+void snort_ignore(Packet*) { }
+
+void snort_log(Packet* p)
+>>>>>>> offload
 {
     pc.log_pkts++;
     EventManager::call_loggers(nullptr, p, nullptr, nullptr);
@@ -64,7 +83,13 @@ bool snort_log(Packet* p)
 
 void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)
 {
+<<<<<<< HEAD
     DetectionEngine::set_check_tags(p, false);
+=======
+    event->event_id = event_id | SnortConfig::get_event_log_id();
+
+    check_tags_flag = false;
+>>>>>>> offload
     pc.log_pkts++;
 
     OutputSet* idx = head ? head->LogList : nullptr;
@@ -76,7 +101,17 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     const char* act = (head and head->ruleListNode) ? head->ruleListNode->name : "";
     Event event(p->pkth->ts.tv_sec, p->pkth->ts.tv_usec, otn->sigInfo, otn->buffer_setters, act);
 
+<<<<<<< HEAD
     DetectionEngine::set_check_tags(p, false);
+=======
+    event.sig_info = &otn->sigInfo;
+    event.ref_time.tv_sec = p->pkth->ts.tv_sec;
+    event.ref_time.tv_usec = p->pkth->ts.tv_usec;
+    event.event_id = event_id | SnortConfig::get_event_log_id();
+    event.event_reference = event.event_id;
+
+    check_tags_flag = false;
+>>>>>>> offload
     pc.log_pkts++;
 
     const uint8_t* data = nullptr;
@@ -134,7 +169,13 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 */
 void check_tags(Packet* p)
 {
+<<<<<<< HEAD
     if ( DetectionEngine::get_check_tags(p) and !(p->packet_flags & PKT_REBUILT_STREAM) )
+=======
+    Event event;
+
+    if ( check_tags_flag and !(p->packet_flags & PKT_REBUILT_STREAM) )
+>>>>>>> offload
     {
         SigInfo info;
         ListHead* listhead = nullptr;

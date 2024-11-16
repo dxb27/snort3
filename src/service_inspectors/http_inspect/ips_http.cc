@@ -29,8 +29,11 @@
 #include "parser/parse_utils.h"
 #include "protocols/packet.h"
 
+<<<<<<< HEAD
 #include "http_common.h"
 #include "http_enum.h"
+=======
+>>>>>>> offload
 #include "http_flow_data.h"
 #include "http_inspect.h"
 #include "http_msg_head_shared.h"

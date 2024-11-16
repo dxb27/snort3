@@ -224,6 +224,7 @@ public:
     uint32_t run_flags = 0;
 
     unsigned offload_limit = 99999;  // disabled
+<<<<<<< HEAD
     unsigned offload_threads = 0;    // disabled
 
     bool hyperscan_literals = false;
@@ -240,6 +241,8 @@ public:
              { "http", {"http2", "http3"} },
              { "netbios-ssn", {"dcerpc"} },
         };
+=======
+>>>>>>> offload
 
     //------------------------------------------------------
     // process stuff

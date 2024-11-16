@@ -27,8 +27,21 @@
 #include <map>
 #include <string>
 
+<<<<<<< HEAD
 #include "framework/ips_action.h"
 #include "main/policy.h"
+=======
+#define EXCEPT_SRC_IP   0x0001  // FIXIT-L checked but not set, same as 2.X
+#define EXCEPT_DST_IP   0x0002  // FIXIT-L checked but not set, same as 2.X
+#define ANY_SRC_PORT    0x0004
+#define ANY_DST_PORT    0x0008
+#define ANY_FLAGS       0x0010
+#define EXCEPT_SRC_PORT 0x0020
+#define EXCEPT_DST_PORT 0x0040
+#define BIDIRECTIONAL   0x0080
+#define ANY_SRC_IP      0x0100
+#define ANY_DST_IP      0x0200
+>>>>>>> offload
 
 #define GID_DEFAULT          1
 #define GID_SESSION        135

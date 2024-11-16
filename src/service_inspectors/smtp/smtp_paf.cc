@@ -23,6 +23,11 @@
 #include "smtp_paf.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+#include "main/snort_debug.h"
+>>>>>>> offload
 #include "protocols/packet.h"
 #include "stream/stream.h"
 

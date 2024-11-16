@@ -1,5 +1,9 @@
 //--------------------------------------------------------------------------
+<<<<<<< HEAD
 // Copyright (C) 2016-2024 Cisco and/or its affiliates. All rights reserved.
+=======
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+>>>>>>> offload
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,6 +28,7 @@
 // IpsContext provides access to all the state required for detection of a
 // single packet.  the state is stored in IpsContextData instances, which
 // are accessed by id.
+<<<<<<< HEAD
 
 #include <list>
 
@@ -53,11 +58,37 @@ struct FlowSnapshot
 {
     uint32_t session_flags;
     SnortProtocolId proto_id;
+=======
+//
+// FIXIT-H IpsContext will likely directly contain certain core detection
+// state such as an event queue.  This data will be migrated after
+// integration into Snort.
+
+#include "main/snort_types.h"
+#include "framework/codec.h"
+
+// required to get a decent decl of pkth
+#include "protocols/packet.h"
+
+#include "detection/detection_util.h"
+
+class SO_PUBLIC IpsContextData
+{
+public:
+    virtual ~IpsContextData() { };
+
+    static unsigned get_ips_id();
+    static unsigned get_max_id();
+
+protected:
+    IpsContextData() { }
+>>>>>>> offload
 };
 
 class SO_PUBLIC IpsContext
 {
 public:
+<<<<<<< HEAD
     using Callback = void(*)(IpsContext*);
     enum State { IDLE, BUSY, SUSPENDED };
 
@@ -86,10 +117,24 @@ public:
 
     void disable_detection();
     void disable_inspection();
+=======
+    IpsContext(unsigned size = 0);  // defaults to max id
+    ~IpsContext();
+
+    void set_context_data(unsigned id, IpsContextData*);
+    IpsContextData* get_context_data(unsigned id) const;
+
+    void set_slot(unsigned s)
+    { slot = s; }
+
+    unsigned get_slot()
+    { return slot; }
+>>>>>>> offload
 
     enum ActiveRules
     { NONE, NON_CONTENT, CONTENT };
 
+<<<<<<< HEAD
     void register_post_callback(Callback callback)
     { post_callbacks.emplace_back(callback); }
 
@@ -144,10 +189,15 @@ public:
 
     Packet* packet;
     Packet* wire_packet = nullptr;
+=======
+public:
+    Packet* packet;
+>>>>>>> offload
     Packet* encode_packet;
     DAQ_PktHdr_t* pkth;
     uint8_t* buf;
 
+<<<<<<< HEAD
     const SnortConfig* conf = nullptr;
     MpseBatch searches;
     MpseStash* stash;
@@ -188,5 +238,24 @@ private:
     bool remove_gadget = false;
 };
 }
+=======
+    DataPointer file_data;
+
+    class SnortConfig* conf;
+    class MpseStash* stash;
+    struct OtnxMatchData* otnx;
+    struct SF_EVENTQ* equeue;
+
+    uint64_t pkt_count;
+    ActiveRules active_rules;
+
+    static const unsigned buf_size = Codec::PKT_MAX;
+
+private:
+    std::vector<IpsContextData*> data;
+    unsigned slot;
+};
+
+>>>>>>> offload
 #endif
 

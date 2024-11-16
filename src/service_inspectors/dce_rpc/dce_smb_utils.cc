@@ -26,9 +26,13 @@
 #include "dce_smb_utils.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
 #include "file_api/file_api.h"
 #include "file_api/file_lib.h"
 #include "hash/hash_key_operations.h"
+=======
+#include "detection/detection_util.h"
+>>>>>>> offload
 #include "main/snort.h"
 #include "packet_io/active.h"
 #include "packet_io/packet_tracer.h"
@@ -1173,7 +1177,11 @@ Packet* DCE2_SmbGetRpkt(DCE2_SmbSsnData* ssd,
         || (data_len == nullptr) || (*data_len == 0))
         return nullptr;
 
+<<<<<<< HEAD
     Packet* rpkt = DCE2_GetRpkt(DetectionEngine::get_current_packet(), rtype, *data, *data_len);
+=======
+    Packet* rpkt = DCE2_GetRpkt(ssd->sd.wire_pkt, rtype, *data, *data_len);
+>>>>>>> offload
 
     if ( !rpkt )
         return nullptr;
@@ -1320,7 +1328,11 @@ void DCE2_SmbSegAlert(DCE2_SmbSsnData* ssd, uint32_t rule_id)
     if (rpkt == nullptr)
         return;
 
+<<<<<<< HEAD
     dce_alert(GID_DCE2, rule_id, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+=======
+    dce_alert(GID_DCE2, rule_id, (dce2CommonStats*)&dce2_smb_stats);
+>>>>>>> offload
 }
 
 static void DCE2_SmbResetFileChunks(DCE2_SmbFileTracker* ftracker)
@@ -1855,7 +1867,19 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
 void DCE2_FileDetect()
 {
     Packet* top_pkt = DetectionEngine::get_current_packet();
+<<<<<<< HEAD
     DetectionEngine::detect(top_pkt);
+=======
+
+    DebugMessage(DEBUG_DCE_SMB, "Payload:\n");
+    DCE2_PrintPktData(top_pkt->data, top_pkt->dsize);
+
+    Profile profile(dce2_smb_pstat_smb_file_detect);
+    DetectionEngine::detect(top_pkt);
+
+    // Reset file data pointer after detecting
+    clear_file_data();
+>>>>>>> offload
     dce2_detected = 1;
 }
 

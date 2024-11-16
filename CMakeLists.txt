@@ -54,6 +54,12 @@ include_directories (${PROJECT_SOURCE_DIR})
 
 if (ENABLE_UNIT_TESTS)
     include(CTest)
+<<<<<<< HEAD
+=======
+    add_custom_target (check COMMAND ${CMAKE_CTEST_COMMAND})
+    add_dependencies (check snort)
+    #add_test (catch_tests ${CMAKE_CURRENT_BINARY_DIR}/src/snort --catch-test all)
+>>>>>>> offload
 endif (ENABLE_UNIT_TESTS)
 
 if (ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS)

@@ -145,6 +145,7 @@ void HttpMsgBody::analyze()
     // seen before
     if (partial_inspected_octets > 0)
     {
+<<<<<<< HEAD
         assert(msg_text.length() >= (int32_t)partial_inspected_octets);
         // For regular flush, file processing needs to be finalized.
         // Continue even if there is no new information
@@ -161,6 +162,18 @@ void HttpMsgBody::analyze()
         session_data->file_decomp_buffer_size_remaining[source_id] =
             FileService::decode_conf.get_decompress_buffer_size();
         msg_text_new.set(msg_text);
+=======
+        do_js_normalization(decoded_body, js_norm_body);
+        const int32_t detect_length =
+            (js_norm_body.length() <= session_data->detect_depth_remaining[source_id]) ?
+            js_norm_body.length() : session_data->detect_depth_remaining[source_id];
+        detect_data.set(detect_length, js_norm_body.start());
+        session_data->detect_depth_remaining[source_id] -= detect_length;
+
+        // Always set file data. File processing will later set a new value in some cases.
+        set_next_file_data(
+            const_cast<uint8_t*>(detect_data.start()), (unsigned)detect_data.length());
+>>>>>>> offload
     }
 
     int32_t& pub_depth_remaining = session_data->publish_depth_remaining[source_id];
@@ -970,6 +983,16 @@ void HttpMsgBody::print_body_section(FILE* output, const char* body_type_str)
     get_classic_buffer(HTTP_BUFFER_RAW_BODY, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_RAW_BODY-1]);
 
+<<<<<<< HEAD
+=======
+    DataPointer body;
+    DetectionEngine::get_next_file_data(body);
+
+    if (body.len > 0)
+    {
+        Field(body.len, body.data).print(output, "file_data");
+    }
+>>>>>>> offload
     HttpMsgSection::print_section_wrapup(output);
 }
 #endif

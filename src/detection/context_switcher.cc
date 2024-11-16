@@ -1,5 +1,9 @@
 //--------------------------------------------------------------------------
+<<<<<<< HEAD
 // Copyright (C) 2016-2024 Cisco and/or its affiliates. All rights reserved.
+=======
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+>>>>>>> offload
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -18,10 +22,16 @@
 
 // context_switcher.cc author Russ Combs <rucombs@cisco.com>
 
+<<<<<<< HEAD
+=======
+#include "context_switcher.h"
+
+>>>>>>> offload
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+<<<<<<< HEAD
 #include "context_switcher.h"
 
 #include <cassert>
@@ -42,28 +52,70 @@ using namespace snort;
 
 static THREAD_LOCAL uint64_t global_context_num = 0;
 
+=======
+#include <assert.h>
+
+#include "main/modules.h"
+#include "main/snort_debug.h"
+#include "utils/stats.h"
+
+#include "ips_context.h"
+
+#ifdef UNIT_TEST
+#include "catch/catch.hpp"
+#endif
+
+>>>>>>> offload
 //--------------------------------------------------------------------------
 // context switcher methods
 //--------------------------------------------------------------------------
 
+<<<<<<< HEAD
+=======
+ContextSwitcher::ContextSwitcher(unsigned max) :
+    hold(max+1, nullptr)  // use 1-based index / skip hold[0]
+{
+}
+
+>>>>>>> offload
 ContextSwitcher::~ContextSwitcher()
 {
     abort();
 
+<<<<<<< HEAD
     for ( const auto* p : contexts )
+=======
+    for ( auto* p : idle )
+>>>>>>> offload
         delete p;
 }
 
 void ContextSwitcher::push(IpsContext* c)
 {
+<<<<<<< HEAD
     assert(c->state == IpsContext::IDLE);
     idle.emplace_back(c);
     contexts.emplace_back(c);
+=======
+    c->set_slot(idle.size() + 1);
+    idle.push_back(c);
+}
+
+IpsContext* ContextSwitcher::pop()
+{
+    if ( idle.empty() )
+        return nullptr;
+
+    IpsContext* c = idle.back();
+    idle.pop_back();
+    return c;
+>>>>>>> offload
 }
 
 void ContextSwitcher::start()
 {
     assert(busy.empty());
+<<<<<<< HEAD
     assert(!idle.empty());
 
     IpsContext* c = idle.back();
@@ -86,10 +138,18 @@ void ContextSwitcher::start()
     c->setup();
 
     busy.emplace_back(c);
+=======
+    assert(idle.size() > 0);
+    trace_logf(detection, "%ld cs::start %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, idle.back()->get_slot(), idle.size(), busy.size());
+    busy.push_back(idle.back());
+    idle.pop_back();
+>>>>>>> offload
 }
 
 void ContextSwitcher::stop()
 {
+<<<<<<< HEAD
     IpsContext* c = busy.back();
     assert(c);
     assert(c->state == IpsContext::BUSY);
@@ -108,10 +168,18 @@ void ContextSwitcher::stop()
 
     busy.pop_back();
     idle.emplace_back(c);
+=======
+    assert(busy.size() == 1);
+    trace_logf(detection, "%ld cs::stop %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
+    idle.push_back(busy.back());
+    busy.pop_back();
+>>>>>>> offload
 }
 
 void ContextSwitcher::abort()
 {
+<<<<<<< HEAD
     debug_logf(detection_trace, TRACE_DETECTION_ENGINE, nullptr,
         "(wire) %" PRIu64 " cs::abort (i=%zu, b=%zu)\n",
         pc.analyzed_pkts, idle.size(), busy.size());
@@ -144,11 +212,29 @@ void ContextSwitcher::abort()
         idle.emplace_back(c);
     }
     non_flow_chain.abort();
+=======
+    trace_logf(detection, "%ld cs::abort (i=%lu, b=%lu)\n",
+        pc.total_from_daq, idle.size(), busy.size());
+    for ( unsigned i = 0; i < hold.capacity(); ++i )
+    {
+        if ( hold[i] )
+        {
+            idle.push_back(hold[i]);
+            hold[i] = nullptr;
+        }
+    }
+    while ( !busy.empty() )
+    {
+        idle.push_back(busy.back());
+        busy.pop_back();
+    }
+>>>>>>> offload
 }
 
 IpsContext* ContextSwitcher::interrupt()
 {
     assert(!idle.empty());
+<<<<<<< HEAD
     assert(!idle.back()->has_callbacks());
 
     IpsContext* c = idle.back();
@@ -167,11 +253,19 @@ IpsContext* ContextSwitcher::interrupt()
 
     busy.emplace_back(c);
     return c;
+=======
+    trace_logf(detection, "%ld cs::interrupt %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, idle.back()->get_slot(), idle.size(), busy.size());
+    busy.push_back(idle.back());
+    idle.pop_back();
+    return busy.back();
+>>>>>>> offload
 }
 
 IpsContext* ContextSwitcher::complete()
 {
     assert(!busy.empty());
+<<<<<<< HEAD
 
     IpsContext* c = busy.back();
     assert(c->state == IpsContext::BUSY);
@@ -229,16 +323,60 @@ void ContextSwitcher::resume(IpsContext* c)
 
     c->state = IpsContext::BUSY;
     busy.emplace_back(c);
+=======
+    trace_logf(detection, "%ld cs::complete %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
+    idle.push_back(busy.back());
+    busy.pop_back();
+    return busy.empty() ? nullptr : busy.back();
+}
+
+unsigned ContextSwitcher::suspend()
+{
+    assert(!busy.empty());
+    trace_logf(detection, "%ld cs::suspend %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, busy.back()->get_slot(), idle.size(), busy.size());
+    IpsContext* c = busy.back();
+    busy.pop_back();
+    unsigned slot = c->get_slot();
+    assert(!hold[slot]);
+    hold[slot] = c;
+    return slot;
+}
+
+void ContextSwitcher::resume(unsigned slot)
+{
+    assert(slot <= hold.capacity());
+    trace_logf(detection, "%ld cs::resume %u (i=%lu, b=%lu)\n",
+        pc.total_from_daq, slot, idle.size(), busy.size());
+    busy.push_back(hold[slot]);
+    hold[slot] = nullptr;
+>>>>>>> offload
 }
 
 IpsContext* ContextSwitcher::get_context() const
 {
+<<<<<<< HEAD
     if ( busy.empty() )
         return nullptr;
 
     return busy.back();
 }
 
+=======
+    assert(!busy.empty());
+    return busy.back();
+}
+
+IpsContext* ContextSwitcher::get_context(unsigned slot) const
+{
+    assert(slot <= hold.capacity());
+    IpsContext* c = hold[slot];
+    assert(c);
+    return c;
+}
+
+>>>>>>> offload
 IpsContext* ContextSwitcher::get_next() const
 {
     assert(!idle.empty());
@@ -246,10 +384,21 @@ IpsContext* ContextSwitcher::get_next() const
 }
 
 IpsContextData* ContextSwitcher::get_context_data(unsigned id) const
+<<<<<<< HEAD
 { return get_context()->get_context_data(id); }
 
 void ContextSwitcher::set_context_data(unsigned id, IpsContextData* cd) const
 { get_context()->set_context_data(id, cd); }
+=======
+{
+    return get_context()->get_context_data(id);
+}
+
+void ContextSwitcher::set_context_data(unsigned id, IpsContextData* cd) const
+{
+    get_context()->set_context_data(id, cd);
+}
+>>>>>>> offload
 
 unsigned ContextSwitcher::idle_count() const
 { return idle.size(); }
@@ -257,6 +406,30 @@ unsigned ContextSwitcher::idle_count() const
 unsigned ContextSwitcher::busy_count() const
 { return busy.size(); }
 
+<<<<<<< HEAD
+=======
+unsigned ContextSwitcher::hold_count() const
+{
+    unsigned c = 0;
+
+    for ( auto* p : hold )
+        if ( p ) c++;
+
+    return c;
+}
+
+bool ContextSwitcher::on_hold(Flow* f)
+{
+    for ( unsigned i = 0; i < hold.capacity(); ++i )
+    {
+        IpsContext* c = hold[i];
+        if ( c and c->packet and c->packet->flow == f )
+            return true;
+    }
+    return false;
+}
+
+>>>>>>> offload
 //--------------------------------------------------------------------------
 // unit tests
 //--------------------------------------------------------------------------
@@ -268,6 +441,7 @@ public:
     ContextData(int) { }
 };
 
+<<<<<<< HEAD
 TEST_CASE("ContextSwitcher single wire", "[ContextSwitcher]")
 {
     const unsigned max = 10;
@@ -425,17 +599,77 @@ TEST_CASE("ContextSwitcher multi wire", "[ContextSwitcher]")
     delete c1->packet->flow;
     delete c2->packet->flow;
     delete c3->packet->flow;
+=======
+TEST_CASE("ContextSwitcher normal", "[ContextSwitcher]")
+{
+    const unsigned max = 3;
+    auto mgr = ContextSwitcher(max);
+    auto id = IpsContextData::get_ips_id();
+    CHECK(!mgr.pop());
+
+    for ( unsigned i = 0; i < max; ++i )
+        mgr.push(new IpsContext(id+1));
+
+    SECTION("workflow")
+    {
+        CHECK(mgr.idle_count() == max);
+
+        mgr.start();
+        CHECK(mgr.idle_count() == max-1);
+        CHECK(mgr.busy_count() == 1);
+
+        IpsContextData* a = new ContextData(id);
+        mgr.set_context_data(1, a);
+        mgr.interrupt();
+        CHECK(mgr.idle_count() == max-2);
+        CHECK(mgr.busy_count() == 2);
+
+        unsigned u = mgr.suspend();
+        CHECK(mgr.idle_count() == max-2);
+        CHECK(mgr.busy_count() == 1);
+        CHECK(mgr.hold_count() == 1);
+
+        mgr.resume(u);
+        CHECK(mgr.idle_count() == max-2);
+        CHECK(mgr.busy_count() == 2);
+        CHECK(mgr.hold_count() == 0);
+
+        mgr.complete();
+        CHECK(mgr.idle_count() == max-1);
+        CHECK(mgr.busy_count() == 1);
+
+        IpsContextData* b = mgr.get_context_data(1);
+        CHECK(a == b);
+
+        mgr.stop();
+        CHECK(mgr.idle_count() == max);
+    }
+    for ( unsigned i = 0; i < max; ++i )
+    {
+        IpsContext* p = mgr.pop();
+        CHECK(p);
+        delete p;
+    }
+    CHECK(!mgr.pop());
+>>>>>>> offload
 }
 
 TEST_CASE("ContextSwitcher abort", "[ContextSwitcher]")
 {
     const unsigned max = 3;
+<<<<<<< HEAD
     ContextSwitcher mgr;
     auto id = IpsContextData::get_ips_id();
+=======
+    auto mgr = ContextSwitcher(max);
+    auto id = IpsContextData::get_ips_id();
+    CHECK(!mgr.pop());
+>>>>>>> offload
 
     for ( unsigned i = 0; i < max; ++i )
         mgr.push(new IpsContext(id+1));
 
+<<<<<<< HEAD
     mgr.start();
     IpsContextData* a = new ContextData(id);
     mgr.set_context_data(1, a);
@@ -449,6 +683,24 @@ TEST_CASE("ContextSwitcher abort", "[ContextSwitcher]")
     mgr.abort();
     CHECK(mgr.idle_count() == max);
     CHECK(!mgr.busy_count());
+=======
+    SECTION("cleanup")
+    {
+        mgr.start();
+        IpsContextData* a = new ContextData(id);
+        mgr.set_context_data(1, a);
+        mgr.interrupt();
+        mgr.interrupt();
+        CHECK(mgr.idle_count() == max-3);
+
+        mgr.suspend();
+        CHECK(mgr.busy_count() == 2);
+        CHECK(mgr.hold_count() == 1);
+
+        mgr.abort();
+        CHECK(mgr.idle_count() == max);
+    }
+>>>>>>> offload
 }
 #endif
 

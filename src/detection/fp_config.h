@@ -70,10 +70,17 @@ public:
     int get_bleed_over_port_limit() const
     { return bleedover_port_limit; }
 
+<<<<<<< HEAD
     int get_single_rule_group() const
     { return portlists_flags & PL_SINGLE_RULE_GROUP; }
 
     int get_bleed_over_warnings() const
+=======
+    int get_single_rule_group()
+    { return portlists_flags & PL_SINGLE_RULE_GROUP; }
+
+    int get_bleed_over_warnings()
+>>>>>>> offload
     { return portlists_flags & PL_BLEEDOVER_WARNINGS_ENABLED; }
 
     int get_debug_print_nc_rules() const

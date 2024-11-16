@@ -23,9 +23,12 @@
 
 #include "ftp_data.h"
 
+<<<<<<< HEAD
 #include <memory>
 #include <string>
 
+=======
+>>>>>>> offload
 #include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
@@ -61,7 +64,11 @@ static void FTPDataProcess(
 {
     int status;
 
+<<<<<<< HEAD
     set_file_data(p->data, p->dsize, data_ssn->path_hash);
+=======
+    set_file_data(p->data, p->dsize);
+>>>>>>> offload
 
     if (data_ssn->packet_flags & FTPDATA_FLG_REST)
     {

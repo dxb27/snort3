@@ -23,11 +23,15 @@
 
 #include "flow.h"
 
+<<<<<<< HEAD
 #include "detection/context_switcher.h"
 #include "detection/detection_continuation.h"
 #include "detection/detection_engine.h"
 #include "flow/flow_control.h"
 #include "flow/flow_key.h"
+=======
+#include "detection/detection_engine.h"
+>>>>>>> offload
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "framework/data_bus.h"
@@ -38,7 +42,11 @@
 #include "protocols/tcp.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "sfip/sf_ip.h"
+<<<<<<< HEAD
 #include "time/clock_defs.h"
+=======
+#include "utils/bitop.h"
+>>>>>>> offload
 #include "utils/stats.h"
 #include "utils/util.h"
 
@@ -47,6 +55,27 @@ extern THREAD_LOCAL class FlowControl* flow_con;
 
 Flow::~Flow()
 {
+<<<<<<< HEAD
+=======
+    pkt_type = type;
+    bitop = nullptr;
+    flow_flags = 0;
+
+    if ( HighAvailabilityManager::active() )
+    {
+        ha_state = new FlowHAState;
+        previous_ssn_state = ssn_state;
+    }
+    mpls_client.length = 0;
+    mpls_server.length = 0;
+}
+
+void Flow::term()
+{
+    if ( session )
+        delete session;
+
+>>>>>>> offload
     free_flow_data();
     delete session;
 
@@ -141,6 +170,10 @@ void Flow::flush(bool do_cleanup)
 
 void Flow::reset(bool do_cleanup)
 {
+    DetectionEngine::onload(this);
+    DetectionEngine::set_packet();
+    DetectionEngine de;
+
     if ( session )
     {
         DetectionEngine::onload(this);

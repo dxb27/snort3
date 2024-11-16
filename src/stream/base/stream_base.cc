@@ -27,6 +27,7 @@
 #include "flow/expect_cache.h"
 #include "flow/flow_control.h"
 #include "flow/prune_stats.h"
+<<<<<<< HEAD
 #include "framework/data_bus.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -39,6 +40,11 @@
 #include "stream/flush_bucket.h"
 #include "stream/stream.h"
 #include "stream/tcp/tcp_stream_tracker.h"
+=======
+#include "managers/inspector_manager.h"
+#include "profiler/profiler_defs.h"
+#include "protocols/packet.h"
+>>>>>>> offload
 
 #include "stream_ha.h"
 #include "stream_module.h"

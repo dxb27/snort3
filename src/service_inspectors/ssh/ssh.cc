@@ -30,6 +30,10 @@
 #include "ssh.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -214,6 +218,10 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
                     // Probable exploit in progress.
                     if (sessp->version == SSH_VERSION_1)
                         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_CRC32);
+<<<<<<< HEAD
+=======
+
+>>>>>>> offload
                     else
                         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_RESPOVERFLOW);
 
@@ -271,7 +279,31 @@ static bool process_ssh_version_string(
         // but there may be valid version strings that are longer due to comments.
         if (p->dsize > SSH_MAX_BANNER_LEN)
         {
+<<<<<<< HEAD
             return false;
+=======
+            /* SSH 1.99 which is the same as SSH2.0 */
+            version = SSH_VERSION_2;
+        }
+        else
+        {
+            version = SSH_VERSION_1;
+        }
+
+        /* CAN-2002-0159 */
+        /* Verify the version string is not greater than
+         * the configured maximum.
+         * We've already verified the first 6 bytes, so we'll start
+         * check from &version_string[6] */
+        /* First make sure the data itself is sufficiently large */
+        if ((p->dsize > config->MaxServerVersionLen) &&
+            /* CheckStrlen will check if the version string up to
+             * MaxServerVersionLen+1 since there's no reason to
+             * continue checking after that point*/
+            (SSHCheckStrlen(&version_stringp[6], config->MaxServerVersionLen-6)))
+        {
+            DetectionEngine::queue_event(GID_SSH, SSH_EVENT_SECURECRT);
+>>>>>>> offload
         }
     }
     if (p->dsize < SSH_MIN_BANNER_LEN
@@ -347,8 +379,106 @@ static bool process_ssh1_key_exchange(SSHData *sessionp, Packet *p, uint8_t dire
 {
     if (p->dsize < SSH1_KEYX_MIN_SIZE)
     {
+<<<<<<< HEAD
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
         return false;
+=======
+        uint32_t length;
+        uint8_t padding_length;
+        uint8_t message_type;
+
+        /*
+         * Validate packet data.
+         * First 4 bytes should have the SSH packet length,
+         * minus any padding.
+         */
+        if ( dsize < 4 )
+        {
+            {
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
+            }
+
+            return 0;
+        }
+
+        /*
+         * SSH1 key exchange is very simple and
+          * consists of only two messages, a server
+         * key and a client key message.`
+         */
+        memcpy(&length, data, sizeof(length));
+        length = ntohl(length);
+
+        /* Packet data should be larger than length, due to padding. */
+        if ( dsize < length )
+        {
+            {
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
+            }
+
+            return 0;
+        }
+
+        padding_length = (uint8_t)(8 - (length % 8));
+
+        /*
+         * With the padding calculated, verify data is sufficiently large
+         * to include the message type.
+         */
+        if ( dsize < (padding_length + 4 + 1 + offset))
+        {
+            if (offset == 0)
+            {
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
+            }
+
+            return 0;
+        }
+
+        message_type = *( (uint8_t*)(data + padding_length + 4));
+
+        switch ( message_type )
+        {
+        case SSH_MSG_V1_SMSG_PUBLIC_KEY:
+            if ( direction == SSH_DIR_FROM_SERVER )
+            {
+                sessionp->state_flags |=
+                    SSH_FLG_SERV_PKEY_SEEN;
+            }
+            else
+            {
+                /* Server msg not from server. */
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_WRONGDIR);
+            }
+            break;
+        case SSH_MSG_V1_CMSG_SESSION_KEY:
+            if ( direction == SSH_DIR_FROM_CLIENT )
+            {
+                sessionp->state_flags |=
+                    SSH_FLG_CLIENT_SKEY_SEEN;
+            }
+            else
+            {
+                /* Client msg not from client. */
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_WRONGDIR);
+            }
+            break;
+        default:
+            /* Invalid msg type*/
+            break;
+        }
+
+        /* Once the V1 key exchange is done, remainder of
+         * communications are encrypted.
+         */
+        ssh_length = length + padding_length + sizeof(length) + offset;
+
+        if ( (sessionp->state_flags & SSH_FLG_V1_KEYEXCH_DONE) ==
+            SSH_FLG_V1_KEYEXCH_DONE )
+        {
+            sessionp->state_flags |= SSH_FLG_SESS_ENCRYPTED;
+        }
+>>>>>>> offload
     }
     uint32_t payload_length = ntohl(*(const uint32_t *)(p->data));
     uint8_t padding = 8 - (payload_length % 8);
@@ -358,8 +488,53 @@ static bool process_ssh1_key_exchange(SSHData *sessionp, Packet *p, uint8_t dire
     if (p->dsize != sizeof(uint32_t) + padding + payload_length
         or p->dsize > SSH_PACKET_MAX_SIZE)
     {
+<<<<<<< HEAD
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
         return false;
+=======
+        /* We want to overlay the data on our data packet struct,
+         * so first verify that the data size is big enough.
+         * This may legitimately occur such as in the case of a
+         * retransmission.
+         */
+        if ( dsize < sizeof(SSH2Packet) )
+        {
+            return 0;
+        }
+
+        /* Overlay the SSH2 binary data packet struct on the packet */
+        ssh2p = (SSH2Packet*)data;
+        if ( dsize < SSH2_HEADERLEN + 1)
+        {
+            /* Invalid packet length. */
+
+            return 0;
+        }
+
+        ssh_length = offset + ntohl(ssh2p->packet_length) + sizeof(ssh2p->packet_length);
+
+        switch ( data[SSH2_HEADERLEN] )
+        {
+        case SSH_MSG_KEXINIT:
+            sessionp->state_flags |=
+                (direction == SSH_DIR_FROM_SERVER ?
+                SSH_FLG_SERV_KEXINIT_SEEN :
+                SSH_FLG_CLIENT_KEXINIT_SEEN );
+            break;
+        default:
+            /* Unrecognized message type. */
+            break;
+        }
+    }
+    else
+    {
+        {
+            /* Unrecognized version. */
+            DetectionEngine::queue_event(GID_SSH, SSH_EVENT_VERSION);
+        }
+
+        return 0;
+>>>>>>> offload
     }
 
     switch (code)
@@ -367,7 +542,134 @@ static bool process_ssh1_key_exchange(SSHData *sessionp, Packet *p, uint8_t dire
     case SSH_MSG_V1_SMSG_PUBLIC_KEY:
         if (direction == SSH_DIR_FROM_SERVER)
         {
+<<<<<<< HEAD
             sessionp->state_flags |= SSH_FLG_SERV_PKEY_SEEN;
+=======
+            if ( sessionp->state_flags & SSH_FLG_SESS_ENCRYPTED )
+            {
+                return ( npacket_offset + offset );
+            }
+            {
+                /* Invalid packet length. */
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
+            }
+
+            return 0;
+        }
+
+        switch (data[npacket_offset + SSH2_HEADERLEN] )
+        {
+        case SSH_MSG_KEXDH_INIT:
+            if ( direction == SSH_DIR_FROM_CLIENT )
+            {
+                sessionp->state_flags |=
+                    SSH_FLG_KEXDH_INIT_SEEN;
+            }
+            else
+            {
+                /* Client msg from server. */
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_WRONGDIR);
+            }
+            break;
+        case SSH_MSG_KEXDH_REPLY:
+            if ( direction == SSH_DIR_FROM_SERVER )
+            {
+                /* KEXDH_REPLY has the same msg
+                  * type as the new style GEX_REPLY
+                 */
+                sessionp->state_flags |=
+                    SSH_FLG_KEXDH_REPLY_SEEN |
+                    SSH_FLG_GEX_REPLY_SEEN;
+            }
+            else
+            {
+                /* Server msg from client. */
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_WRONGDIR);
+            }
+            break;
+        case SSH_MSG_KEXDH_GEX_REQ:
+            if ( direction == SSH_DIR_FROM_CLIENT )
+            {
+                sessionp->state_flags |=
+                    SSH_FLG_GEX_REQ_SEEN;
+            }
+            else
+            {
+                /* Server msg from client. */
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_WRONGDIR);
+            }
+            break;
+        case SSH_MSG_KEXDH_GEX_GRP:
+            if ( direction == SSH_DIR_FROM_SERVER )
+            {
+                sessionp->state_flags |=
+                    SSH_FLG_GEX_GRP_SEEN;
+            }
+            else
+            {
+                /* Client msg from server. */
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_WRONGDIR);
+            }
+            break;
+        case SSH_MSG_KEXDH_GEX_INIT:
+            if ( direction == SSH_DIR_FROM_CLIENT )
+            {
+                sessionp->state_flags |=
+                    SSH_FLG_GEX_INIT_SEEN;
+            }
+            else
+            {
+                /* Server msg from client. */
+                DetectionEngine::queue_event(GID_SSH, SSH_EVENT_WRONGDIR);
+            }
+            break;
+        case SSH_MSG_NEWKEYS:
+            /* This message is required to complete the
+             * key exchange. Both server and client should
+             * send one, but as per Alex Kirk's note on this,
+             * in some implementations the server does not
+             * actually send this message. So receving a new
+             * keys msg from the client is sufficient.
+             */
+            if ( direction == SSH_DIR_FROM_CLIENT )
+            {
+                sessionp->state_flags |= SSH_FLG_NEWKEYS_SEEN;
+            }
+            break;
+        default:
+            /* Unrecognized message type. Possibly encrypted */
+            sessionp->state_flags |= SSH_FLG_SESS_ENCRYPTED;
+            return ( npacket_offset + offset);
+        }
+
+        /* If either an old-style or new-style Diffie Helman exchange
+         * has completed, the session will enter encrypted mode.
+         */
+        if (( (sessionp->state_flags &
+            SSH_FLG_V2_DHOLD_DONE) == SSH_FLG_V2_DHOLD_DONE )
+            || ( (sessionp->state_flags &
+            SSH_FLG_V2_DHNEW_DONE) == SSH_FLG_V2_DHNEW_DONE ))
+        {
+            sessionp->state_flags |= SSH_FLG_SESS_ENCRYPTED;
+            if (ssh_length < dsize)
+            {
+                if ( ssh_length >= 4 )
+                {
+                    npacket_offset += ssh_length;
+                    dsize -= ssh_length;
+                    continue;
+                }
+                return ( npacket_offset + offset );
+            }
+            else
+                return 0;
+        }
+
+        if ((ssh_length < dsize) && (ssh_length >= 4))
+        {
+            npacket_offset += ssh_length;
+            dsize -= ssh_length;
+>>>>>>> offload
         }
         else
         {

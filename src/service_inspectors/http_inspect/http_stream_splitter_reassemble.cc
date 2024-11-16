@@ -285,11 +285,18 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
     offset += length;
 }
 
+<<<<<<< HEAD
 const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     unsigned, const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
     // cppcheck-suppress unreadVariable
     Profile profile(HttpModule::get_profile_stats());
+=======
+const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total, unsigned,
+    const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
+{
+    StreamBuffer http_buf { nullptr, 0 };
+>>>>>>> offload
 
     copied = len;
 
@@ -307,7 +314,11 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         {
             if (!(flags & PKT_PDU_TAIL))
             {
+<<<<<<< HEAD
                 return { nullptr, 0 };
+=======
+                return http_buf;
+>>>>>>> offload
             }
             bool tcp_close;
             uint8_t* test_buffer;
@@ -320,9 +331,15 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
             }
             if (test_buffer == nullptr)
             {
+<<<<<<< HEAD
                 // Source ID does not match test data, no test data was flushed, preparing for a
                 // TCP connection close, or there is no more test data
                 return { nullptr, 0 };
+=======
+                // Source ID does not match test data, no test data was flushed, or there is no
+                // more test data
+                return http_buf;
+>>>>>>> offload
             }
             data = test_buffer;
         }
@@ -339,9 +356,12 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     if ((session_data->type_expected[source_id] == SEC_ABORT) ||
         (session_data->section_type[source_id] == SEC__NOT_COMPUTE))
     {
+<<<<<<< HEAD
         assert(session_data->type_expected[source_id] != SEC_ABORT);
         assert(session_data->section_type[source_id] != SEC__NOT_COMPUTE);
         session_data->type_expected[source_id] = SEC_ABORT;
+=======
+>>>>>>> offload
         return { nullptr, 0 };
     }
 
@@ -416,7 +436,11 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
                 }
             }
         }
+<<<<<<< HEAD
         return { nullptr, 0 };
+=======
+        return http_buf;
+>>>>>>> offload
     }
 
     HttpModule::increment_peg_counts(PEG_REASSEMBLE);
@@ -471,9 +495,32 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         uint32_t& running_total = session_data->running_total[source_id];
         if (running_total != total)
         {
+<<<<<<< HEAD
             assert(false);
             session_data->type_expected[source_id] = SEC_ABORT;
             return { nullptr, 0 };
+=======
+            // FIXIT-M kludge until we work out issues with returning an empty buffer
+            if (send_to_detection.length() > 0)
+            {
+                http_buf.data = send_to_detection.start();
+                http_buf.length = send_to_detection.length();
+            }
+            else
+            {
+                http_buf.data = (const uint8_t*)"";
+                http_buf.length = 1;
+            }
+#ifdef REG_TEST
+            if (HttpTestManager::use_test_output())
+            {
+                fprintf(HttpTestManager::get_output_file(), "Sent to detection %u octets\n\n",
+                    http_buf.length);
+                fflush(HttpTestManager::get_output_file());
+            }
+#endif
+            return http_buf;
+>>>>>>> offload
         }
         running_total = 0;
         const uint32_t buf_size =

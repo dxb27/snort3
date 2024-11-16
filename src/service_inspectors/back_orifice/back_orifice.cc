@@ -110,6 +110,10 @@
 #endif
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "framework/inspector.h"
 #include "framework/module.h"
 #include "log/messages.h"
@@ -482,9 +486,23 @@ void BackOrifice::eval(Packet* p)
             // if we fall thru there's a detect
             int bo_direction = BoGetDirection(p, pkt_data);
             if ( bo_direction == BO_FROM_CLIENT )
+<<<<<<< HEAD
                 DetectionEngine::queue_event(GID_BO, BO_CLIENT_TRAFFIC_DETECT);
             else if ( bo_direction == BO_FROM_SERVER )
                 DetectionEngine::queue_event(GID_BO, BO_SERVER_TRAFFIC_DETECT);
+=======
+            {
+                DetectionEngine::queue_event(GID_BO, BO_CLIENT_TRAFFIC_DETECT);
+                DebugMessage(DEBUG_INSPECTOR, "Client packet\n");
+            }
+
+            else if ( bo_direction == BO_FROM_SERVER )
+            {
+                DetectionEngine::queue_event(GID_BO, BO_SERVER_TRAFFIC_DETECT);
+                DebugMessage(DEBUG_INSPECTOR, "Server packet\n");
+            }
+
+>>>>>>> offload
             else
                 DetectionEngine::queue_event(GID_BO, BO_TRAFFIC_DETECT);
         }

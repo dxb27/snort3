@@ -33,8 +33,11 @@
 #include "ips_context.h"
 #include "treenodes.h"
 
+<<<<<<< HEAD:src/detection/event_trace.cc
 using namespace snort;
 
+=======
+>>>>>>> offload:src/detection/detection_util.cc
 #define LOG_CHARS 16
 
 static THREAD_LOCAL TextLog* tlog = nullptr;

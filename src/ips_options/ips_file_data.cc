@@ -22,6 +22,10 @@
 #include "config.h"
 #endif
 
+<<<<<<< HEAD
+=======
+#include "detection/detection_defines.h"
+>>>>>>> offload
 #include "detection/detection_engine.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -57,10 +61,15 @@ IpsOption::EvalStatus FileDataOption::eval(Cursor& c, Packet* p)
     // cppcheck-suppress unreadVariable
     RuleProfile profile(fileDataPerfStats);
 
+<<<<<<< HEAD
     uint64_t sid;
     bool drop_sse;
     bool no_sse;
     DataPointer dp = DetectionEngine::get_file_data(p->context, sid, drop_sse, no_sse);
+=======
+    DataPointer dp;
+    DetectionEngine::get_file_data(dp);
+>>>>>>> offload
 
     if ( !dp.data || !dp.len )
         return NO_MATCH;

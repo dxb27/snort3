@@ -72,6 +72,7 @@ const std::array<const char*, PacketManager::stat_offset> PacketManager::stat_na
 };
 
 // Encoder Foo
+<<<<<<< HEAD
 static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX>* s_pkt;
 
 void PacketManager::global_init(uint8_t max)
@@ -82,6 +83,10 @@ void PacketManager::thread_init()
 
 void PacketManager::thread_term()
 { delete s_pkt; }
+=======
+static THREAD_LOCAL PegCount total_rebuilt_pkts = 0;
+static THREAD_LOCAL std::array<uint8_t, Codec::PKT_MAX> s_pkt { { 0 } };
+>>>>>>> offload
 
 //-------------------------------------------------------------------------
 // Private helper functions
@@ -146,6 +151,80 @@ void PacketManager::handle_decode_failure(Packet* p, RawData& raw, const CodecDa
 
         switch (p->layers[p->num_layers - 1].prot_id)
         {
+<<<<<<< HEAD
+=======
+            codec_data.codec_flags &= ~CODEC_SAVE_LAYER;
+            unsure_encap_ptrs = p->ptrs;
+        }
+        else
+        {
+            codec_data.codec_flags &= ~CODEC_UNSURE_ENCAP;
+        }
+
+        if (codec_data.proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT))
+        {
+            // FIXIT-M refactor when ip_proto's become an array
+            if ( p->is_fragment() )
+            {
+                if ( prev_prot_id == ProtocolId::FRAGMENT )
+                {
+                    const ip::IP6Frag* const fragh =
+                        reinterpret_cast<const ip::IP6Frag*>(raw.data);
+                    p->ip_proto_next = fragh->next();
+                }
+                else
+                {
+                    p->ip_proto_next = p->ptrs.ip_api.get_ip4h()->proto();
+                }
+            }
+            else
+            {
+                if(codec_data.next_prot_id != ProtocolId::FINISHED_DECODE)
+                    p->ip_proto_next = convert_protocolid_to_ipprotocol(codec_data.next_prot_id);
+            }
+        }
+
+        // If we have reached the MAX_LAYERS, we keep decoding
+        // but no longer keep track of the layers.
+        if ( p->num_layers == CodecManager::max_layers )
+            DetectionEngine::queue_event(GID_DECODE, DECODE_TOO_MANY_LAYERS);
+        else
+            push_layer(p, prev_prot_id, raw.data, codec_data.lyr_len);
+
+        // internal statistics and record keeping
+        s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
+        mapped_prot = CodecManager::s_proto_map[to_utype(codec_data.next_prot_id)];
+        prev_prot_id = codec_data.next_prot_id;
+
+        // set for next call
+        const uint16_t curr_lyr_len = codec_data.lyr_len + codec_data.invalid_bytes;
+        assert(curr_lyr_len <= raw.len);
+        raw.len -= curr_lyr_len;
+        raw.data += curr_lyr_len;
+        p->proto_bits |= codec_data.proto_bits;
+        codec_data.next_prot_id = ProtocolId::FINISHED_DECODE;
+        codec_data.lyr_len = 0;
+        codec_data.invalid_bytes = 0;
+        codec_data.proto_bits = 0;
+    }
+
+    DebugFormat(DEBUG_DECODE, "Codec %s (protocol_id: %hu: ip header"
+        " starts at: %p, length is %lu\n",
+        CodecManager::s_protocols[mapped_prot]->get_name(),
+        static_cast<uint16_t>(prev_prot_id), pkt, (unsigned long)codec_data.lyr_len);
+
+    s_stats[mapped_prot + stat_offset]++;
+
+    // if the final protocol ID is not the default codec, a Codec failed
+    if (prev_prot_id != ProtocolId::FINISHED_DECODE)
+    {
+        if (codec_data.codec_flags & CODEC_UNSURE_ENCAP)
+        {
+            p->ptrs = unsure_encap_ptrs;
+
+            switch (p->layers[p->num_layers-1].prot_id)
+            {
+>>>>>>> offload
             case ProtocolId::ESP:
                 // Hardcoding ESP because we trust iff the layer
                 // immediately preceding the fail is ESP.
@@ -285,6 +364,7 @@ void PacketManager::decode(
                 // FIXIT-M refactor when ip_proto's become an array
                 if (p->is_fragment())
                 {
+<<<<<<< HEAD
                     if (prev_prot_id == ProtocolId::FRAGMENT)
                     {
                         const ip::IP6Frag* const fragh = reinterpret_cast<const ip::IP6Frag*>(raw.data);
@@ -297,6 +377,9 @@ void PacketManager::decode(
                 {
                     if (codec_data.next_prot_id != ProtocolId::FINISHED_DECODE)
                         p->ip_proto_next = convert_protocolid_to_ipprotocol(codec_data.next_prot_id);
+=======
+                    DetectionEngine::queue_event(GID_DECODE, DECODE_IP_UNASSIGNED_PROTO);
+>>>>>>> offload
                 }
             }
 
@@ -895,6 +978,12 @@ void PacketManager::encode_update(Packet* p)
 // codec support and statistics
 //-------------------------------------------------------------------------
 
+<<<<<<< HEAD
+=======
+uint64_t PacketManager::get_rebuilt_packet_count()
+{ return total_rebuilt_pkts; }
+
+>>>>>>> offload
 uint16_t PacketManager::encode_get_max_payload(const Packet* p)
 {
     if ( !p->num_layers )

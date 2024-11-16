@@ -214,6 +214,15 @@ static struct SnortConfigWrapper : public ConfigWrapper
 
 static struct SnortEventHandler : public EventHandler
 {
+<<<<<<< HEAD
+=======
+    void handle(const Event&) override
+    { DetectionEngine::queue_event(GID_LATENCY, LATENCY_EVENT_PACKET_FASTPATHED); }
+} event_handler;
+
+static struct SnortLogHandler : public EventHandler
+{
+>>>>>>> offload
     void handle(const Event& e) override
     {
         assert(e.packet);

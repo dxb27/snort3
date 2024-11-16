@@ -21,10 +21,13 @@
 #ifndef DCE_COMMON_H
 #define DCE_COMMON_H
 
+<<<<<<< HEAD
 #include <cassert>
 #include <memory>
 #include <string>
 
+=======
+>>>>>>> offload
 #include "detection/detection_engine.h"
 #include "framework/counts.h"
 #include "framework/endianness.h"
@@ -42,7 +45,10 @@ extern const snort::InspectApi dce_http_server_api;
 extern THREAD_LOCAL int dce2_detected;
 
 #define GID_DCE2 133
+<<<<<<< HEAD
 #define DCE_RPC_SERVICE_NAME "dcerpc"
+=======
+>>>>>>> offload
 
 enum DCE2_Policy
 {
@@ -386,6 +392,7 @@ inline bool DCE2_SsnIsServerSambaPolicy(DCE2_SsnData* sd)
 
 inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats, DCE2_SsnData& sd)
 {
+<<<<<<< HEAD
     if ( ((dce2CommonProtoConf*)sd.config)->limit_alerts )
     {
         // Assuming the maximum sid for dce is less than 64
@@ -394,6 +401,9 @@ inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats, DCE2_S
         sd.alert_mask |= ((uint64_t)1 << sid);
     }
     snort::DetectionEngine::queue_event(gid,sid);
+=======
+    DetectionEngine::queue_event(gid,sid);
+>>>>>>> offload
     stats->events++;
 }
 
@@ -403,11 +413,18 @@ bool dce2_set_co_config(const snort::Value&, dce2CoProtoConf&);
 void print_dce2_co_config(const dce2CoProtoConf&);
 bool dce2_paf_abort(DCE2_SsnData*);
 void DCE2_Detect(DCE2_SsnData*);
+<<<<<<< HEAD
 snort::Packet* DCE2_GetRpkt(snort::Packet*, DCE2_RpktType, const uint8_t*, uint32_t);
 uint16_t DCE2_GetRpktMaxData(DCE2_RpktType);
 DCE2_Ret DCE2_AddDataToRpkt(snort::Packet*, const uint8_t*, uint32_t);
 DCE2_TransType get_dce2_trans_type(const snort::Packet* p);
 void reset_using_rpkt();
+=======
+Packet* DCE2_GetRpkt(Packet*, DCE2_RpktType, const uint8_t*, uint32_t);
+uint16_t DCE2_GetRpktMaxData(DCE2_SsnData*, DCE2_RpktType);
+DCE2_Ret DCE2_AddDataToRpkt(Packet*, const uint8_t*, uint32_t);
+DCE2_SsnData* get_dce2_session_data(Packet*);
+>>>>>>> offload
 
 #endif
 

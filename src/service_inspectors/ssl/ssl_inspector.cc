@@ -25,10 +25,16 @@
 
 #include "ssl_inspector.h"
 
+<<<<<<< HEAD
 #include <memory>
 #include <string>
 
 #include "detection/detection_engine.h"
+=======
+#include "detection/detect.h"
+#include "detection/detection_engine.h"
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -175,7 +181,11 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
 }
 
 static inline uint32_t SSLPP_process_alert(
+<<<<<<< HEAD
     SSL_PROTO_CONF*, uint32_t ssn_flags, uint32_t new_flags, Packet* packet, uint32_t info_flags)
+=======
+    SSL_PROTO_CONF*, uint32_t ssn_flags, uint32_t new_flags, Packet* packet)
+>>>>>>> offload
 {
     ssn_flags |= new_flags;
 
@@ -187,8 +197,13 @@ static inline uint32_t SSLPP_process_alert(
         !(new_flags & SSL_HEARTBEAT_SEEN) &&
         info_flags & SSL_ALERT_LVL_FATAL_FLAG)
     {
+<<<<<<< HEAD
         DetectionEngine::disable_content(packet);
         sslstats.disabled++;
+=======
+        DebugMessage(DEBUG_SSL, "Disabling detect\n");
+        DetectionEngine::disable_content(packet);
+>>>>>>> offload
     }
 
     /* Need to negate the application flags from the opposing side. */
@@ -235,7 +250,10 @@ static inline uint32_t SSLPP_process_app(SSL_PROTO_CONF* config, uint32_t ssn_fl
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
             DetectionEngine::disable_content(packet);
+<<<<<<< HEAD
             sslstats.disabled++;
+=======
+>>>>>>> offload
         }
     }
 
@@ -262,7 +280,10 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
         else if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
             DetectionEngine::disable_content(packet);
+<<<<<<< HEAD
             sslstats.disabled++;
+=======
+>>>>>>> offload
         }
     }
     else
@@ -352,7 +373,10 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
         if (!(new_flags & SSL_HEARTBEAT_SEEN))
         {
             DetectionEngine::disable_content(p);
+<<<<<<< HEAD
             sslstats.disabled++;
+=======
+>>>>>>> offload
         }
 
         sd->ssn_flags |= new_flags;

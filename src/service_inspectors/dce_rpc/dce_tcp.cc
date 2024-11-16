@@ -26,8 +26,11 @@
 #include "dce_tcp.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
 #include "main/snort_config.h"
 #include "pub_sub/dcerpc_events.h"
+=======
+>>>>>>> offload
 #include "utils/util.h"
 
 #include "dce_context_data.h"
@@ -157,6 +160,11 @@ void Dce2Tcp::eval(Packet* p)
         if (!dce2_detected)
             DCE2_Detect(&dce2_tcp_sess->sd);
 
+<<<<<<< HEAD
+=======
+        DCE2_ResetRopts(&dce2_tcp_sess->sd.ropts);
+
+>>>>>>> offload
         delete p->endianness;
         p->endianness = nullptr;
     }
@@ -204,6 +212,7 @@ static void dce2_tcp_init()
     DceContextData::init(DCE2_TRANS_TYPE__TCP);
 }
 
+<<<<<<< HEAD
 static const char* dce2_tcp_bufs[] =
 {
     "dce_iface",
@@ -212,6 +221,8 @@ static const char* dce2_tcp_bufs[] =
     nullptr
 };
 
+=======
+>>>>>>> offload
 const InspectApi dce2_tcp_api =
 {
     {

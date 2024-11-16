@@ -36,10 +36,16 @@
 #include "dce_smb2.h"
 #include "dce_smb2_utils.h"
 
+<<<<<<< HEAD
 using namespace snort;
 
 static size_t smb_memcap;
 THREAD_LOCAL dce2SmbStats dce2_smb_stats;
+=======
+THREAD_LOCAL dce2SmbStats dce2_smb_stats;
+
+// used here
+>>>>>>> offload
 THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 
 //-------------------------------------------------------------------------
@@ -366,6 +372,7 @@ void Dce2SmbInspector::eval(Packet* p)
 
     reset_using_rpkt();
 
+<<<<<<< HEAD
     Dce2SmbFlowData* smb_flowdata = (Dce2SmbFlowData*)p->flow->get_flow_data(Dce2SmbFlowData::inspector_id);
     if (smb_flowdata and smb_flowdata->dce2_smb_session_data)
     {
@@ -404,6 +411,14 @@ void Dce2SmbInspector::eval(Packet* p)
             return;
         }
     }
+=======
+    dce2_smb_sess = dce2_handle_smb_session(p, &config);
+
+    if (dce2_smb_sess)
+    {
+        p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
+        dce2_detected = 0;
+>>>>>>> offload
 
     //  By this time we must know the smb version, have correct smb session data and created
     // flowdata
@@ -416,6 +431,14 @@ void Dce2SmbInspector::eval(Packet* p)
         DCE2_Smb1Process(dce2_smb_sess);
         if (!dce2_detected)
             DCE2_Detect(&dce2_smb_sess->sd);
+<<<<<<< HEAD
+=======
+
+        DCE2_ResetRopts(&dce2_smb_sess->sd.ropts);
+
+        delete p->endianness;
+        p->endianness = nullptr;
+>>>>>>> offload
     }
     else
     {
@@ -483,6 +506,7 @@ static void dce2_smb_dtor(Inspector* p)
     delete p;
 }
 
+<<<<<<< HEAD
 static const char* dce2_bufs[] =
 {
     "dce_iface",
@@ -491,6 +515,8 @@ static const char* dce2_bufs[] =
     nullptr
 };
 
+=======
+>>>>>>> offload
 const InspectApi dce2_smb_api =
 {
     {
@@ -511,8 +537,13 @@ const InspectApi dce2_smb_api =
     "netbios-ssn",
     dce2_smb_init,
     nullptr, // pterm
+<<<<<<< HEAD
     dce2_smb_tinit, // tinit
     dce2_smb_tterm, // tterm
+=======
+    nullptr, // tinit
+    nullptr, // tterm
+>>>>>>> offload
     dce2_smb_ctor,
     dce2_smb_dtor,
     nullptr, // ssn

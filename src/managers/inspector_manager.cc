@@ -28,9 +28,15 @@
 #include <vector>
 
 #include "binder/bind_module.h"
+<<<<<<< HEAD
 #include "detection/detection_engine.h"
 #include "detection/fp_utils.h"
 #include "flow/expect_flow.h"
+=======
+#include "binder/binder.h"
+#include "detection/detect.h"
+#include "detection/detection_engine.h"
+>>>>>>> offload
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "log/log_stats.h"
@@ -1931,9 +1937,16 @@ void inline InspectorManager::full_inspection(Packet* p)
          and (!(p->is_cooked()) or p->is_defrag()) )
         bumble(p);
 
+<<<<<<< HEAD
     // For reassembled PDUs, a null data buffer signals no detection. Detection can be required
     // with a length of 0. For raw packets, a length of 0 does signal no detection.
     if ( (p->is_cooked() and !p->data) or (!p->is_cooked() and !p->dsize) )
+=======
+    if ( p->disable_inspect )
+        return false;
+
+    else if ( !p->dsize )
+>>>>>>> offload
         DetectionEngine::disable_content(p);
 
     else if ( flow->gadget && flow->gadget->likes(p) )

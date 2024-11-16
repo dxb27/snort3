@@ -27,6 +27,10 @@
 #include "dnp3_reassembly.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "protocols/packet.h"
 
 #include "dnp3_map.h"
@@ -410,7 +414,14 @@ bool dnp3_full_reassembly(const dnp3ProtoConf& config, dnp3_session_data_t* sess
            via the get_buf() inspector api */
         if ((ret == true) && (packet->is_udp()))
         {
+<<<<<<< HEAD
             DetectionEngine::detect(packet);
+=======
+            {
+                ProfileExclude profile_exclude(dnp3_perf_stats);
+                DetectionEngine::detect(packet);
+            }
+>>>>>>> offload
 
             /* Since detection was done, reset reassembly state to avoid double alerts
                on the last PDU */

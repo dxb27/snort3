@@ -53,7 +53,11 @@
 
 #include "sfeventq.h"
 
+<<<<<<< HEAD
 #include <cassert>
+=======
+#include <assert.h>
+>>>>>>> offload
 #include "utils/util.h"
 
 /*
@@ -126,7 +130,11 @@ unsigned sfeventq_reset(SF_EVENTQ* eq)
 {
     unsigned fails = eq->fails;
     eq->fails = 0;
+<<<<<<< HEAD
     eq->head = nullptr;
+=======
+    eq->head = NULL;
+>>>>>>> offload
     eq->cur_nodes = 0;
     eq->cur_events = 0;
     eq->reserve_event = (char*)(&eq->event_mem[eq->max_nodes * eq->event_size]);

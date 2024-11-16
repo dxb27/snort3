@@ -26,7 +26,11 @@
 
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
+<<<<<<< HEAD
 #include "log/log_text.h"
+=======
+#include "log/text_log.h"
+>>>>>>> offload
 #include "main/snort_config.h"
 #include "protocols/eth.h"
 #include "protocols/packet_manager.h"
@@ -160,15 +164,23 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         eth::EtherHdr* ho = reinterpret_cast<eth::EtherHdr*>(buf.data());
         ho->ether_type = enc.ethertype_set() ?
             htons(to_utype(enc.next_ethertype)) : hi->ether_type;
+<<<<<<< HEAD
 
         const SnortConfig* sc = SnortConfig::get_conf();
+=======
+>>>>>>> offload
 
         if ( enc.forward() )
         {
             memcpy(ho->ether_src, hi->ether_src, sizeof(ho->ether_src));
 
+<<<<<<< HEAD
             if ( sc->eth_dst )
                 memcpy(ho->ether_dst, sc->eth_dst, sizeof(ho->ether_dst));
+=======
+            if ( snort_conf->eth_dst )
+                memcpy(ho->ether_dst, snort_conf->eth_dst, sizeof(ho->ether_dst));
+>>>>>>> offload
             else
                 memcpy(ho->ether_dst, hi->ether_dst, sizeof(ho->ether_dst));
         }
@@ -176,8 +188,13 @@ bool EthCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         {
             memcpy(ho->ether_src, hi->ether_dst, sizeof(ho->ether_src));
 
+<<<<<<< HEAD
             if ( sc->eth_dst )
                 memcpy(ho->ether_dst, sc->eth_dst, sizeof(ho->ether_dst));
+=======
+            if ( snort_conf->eth_dst )
+                memcpy(ho->ether_dst, snort_conf->eth_dst, sizeof(ho->ether_dst));
+>>>>>>> offload
             else
                 memcpy(ho->ether_dst, hi->ether_src, sizeof(ho->ether_dst));
         }

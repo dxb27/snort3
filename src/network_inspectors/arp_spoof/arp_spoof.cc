@@ -71,10 +71,15 @@
 #include "config.h"
 #endif
 
+<<<<<<< HEAD
 #include <iomanip>
 #include <sstream>
 
 #include "detection/detection_engine.h"
+=======
+#include "detection/detection_engine.h"
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/arp.h"
@@ -222,11 +227,19 @@ void ArpSpoof::eval(Packet* p)
         if (memcmp((const uint8_t*)dst_mac_addr, (const uint8_t*)bcast, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_UNICAST_ARP_REQUEST);
+<<<<<<< HEAD
+=======
+            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Unicast request\n");
+>>>>>>> offload
         }
         else if (memcmp((const uint8_t*)src_mac_addr,
             (const uint8_t*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
+<<<<<<< HEAD
+=======
+            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch request\n");
+>>>>>>> offload
         }
         break;
     case ARPOP_REPLY:
@@ -234,11 +247,19 @@ void ArpSpoof::eval(Packet* p)
             (const uint8_t*)ah->arp_sha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_SRC);
+<<<<<<< HEAD
+=======
+            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch reply src\n");
+>>>>>>> offload
         }
         else if (memcmp((const uint8_t*)dst_mac_addr,
             (const uint8_t*)ah->arp_tha, 6) != 0)
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ETHERFRAME_ARP_MISMATCH_DST);
+<<<<<<< HEAD
+=======
+            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Ethernet/ARP mismatch reply dst\n");
+>>>>>>> offload
         }
         break;
     }
@@ -258,6 +279,10 @@ void ArpSpoof::eval(Packet* p)
         if ( cmp_ether_src || cmp_arp_sha )
         {
             DetectionEngine::queue_event(GID_ARP_SPOOF, ARPSPOOF_ARP_CACHE_OVERWRITE_ATTACK);
+<<<<<<< HEAD
+=======
+            DebugMessage(DEBUG_INSPECTOR, "MODNAME: Attempted ARP cache overwrite attack\n");
+>>>>>>> offload
         }
     }
 }

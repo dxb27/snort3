@@ -51,8 +51,19 @@ FlowControl::FlowControl(const FlowCacheConfig& fc)
 
 FlowControl::~FlowControl()
 {
+<<<<<<< HEAD
     delete cache;
     snort_free(mem);
+=======
+    DetectionEngine de;
+
+    delete ip_cache;
+    delete icmp_cache;
+    delete tcp_cache;
+    delete udp_cache;
+    delete user_cache;
+    delete file_cache;
+>>>>>>> offload
     delete exp_cache;
 }
 
@@ -553,6 +564,9 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
     if ( p->proto_bits & PROTO_BIT__MPLS )
         flow->set_mpls_layer_per_dir(p);
 
+    if ( p->type() == PktType::PDU )  // FIXIT-H cooked or PDU?
+        DetectionEngine::onload(flow);
+
     switch ( flow->flow_state )
     {
     case Flow::FlowState::SETUP:
@@ -569,6 +583,11 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
             Stream::stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
         else
             DetectionEngine::disable_all(p);
+<<<<<<< HEAD
+=======
+
+        p->ptrs.decode_flags |= DECODE_PKT_TRUST;
+>>>>>>> offload
         break;
 
     case Flow::FlowState::BLOCK:
@@ -577,10 +596,14 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
         else
             p->active->block_again();
 
+<<<<<<< HEAD
         p->active->set_drop_reason("session");
         DetectionEngine::disable_all(p);
         if ( PacketTracer::is_active() )
             PacketTracer::log("Session: session has been blocked, drop\n");
+=======
+        DetectionEngine::disable_all(p);
+>>>>>>> offload
         break;
 
     case Flow::FlowState::RESET:
@@ -589,11 +612,16 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
         else
             p->active->reset_again();
 
+<<<<<<< HEAD
         Stream::blocked_flow(p);
         p->active->set_drop_reason("session");
         DetectionEngine::disable_all(p);
         if ( PacketTracer::is_active() )
             PacketTracer::log("Session: session has been reset\n");
+=======
+        Stream::blocked_flow(flow, p);
+        DetectionEngine::disable_all(p);
+>>>>>>> offload
         break;
     }
 
@@ -634,7 +662,15 @@ void FlowControl::check_expected_flow(Flow* flow, Packet* p)
 
     if ( ignore )
     {
+<<<<<<< HEAD
         flow->ssn_state.ignore_direction = SSN_DIR_BOTH;
+=======
+        DebugFormat(DEBUG_STREAM_STATE,
+            "Stream: Ignoring packet from %s. Marking flow marked as ignore.\n",
+            (p->packet_flags & PKT_FROM_CLIENT) ? "sender" : "responder");
+
+        flow->ssn_state.ignore_direction = ignore;
+>>>>>>> offload
         DetectionEngine::disable_all(p);
     }
 }

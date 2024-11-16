@@ -1,5 +1,9 @@
 //--------------------------------------------------------------------------
+<<<<<<< HEAD
 // Copyright (C) 2016-2024 Cisco and/or its affiliates. All rights reserved.
+=======
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+>>>>>>> offload
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,6 +28,7 @@
 
 #include "detection_engine.h"
 
+<<<<<<< HEAD
 #include "events/event_queue.h"
 #include "events/sfeventq.h"
 #include "filters/sfthreshold.h"
@@ -37,10 +42,25 @@
 #include "managers/mpse_manager.h"
 #include "packet_io/active.h"
 #include "packet_io/packet_tracer.h"
+=======
+#include "events/sfeventq.h"
+#include "filters/sfthreshold.h"
+#include "framework/endianness.h"
+#include "helpers/ring.h"
+#include "latency/packet_latency.h"
+#include "main/modules.h"
+#include "main/snort.h"
+#include "main/snort_config.h"
+#include "main/snort_debug.h"
+#include "main/thread.h"
+#include "managers/inspector_manager.h"
+#include "packet_io/active.h"
+>>>>>>> offload
 #include "parser/parser.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
+<<<<<<< HEAD
 #include "time/packet_time.h"
 #include "trace/trace_api.h"
 #include "utils/stats.h"
@@ -60,12 +80,28 @@ using namespace snort;
 
 static THREAD_LOCAL RegexOffload* offloader = nullptr;
 bool DetectionEngine::offload_enabled = false;
+=======
+#include "utils/stats.h"
+
+#include "context_switcher.h"
+#include "detection_util.h"
+#include "detect.h"
+#include "fp_config.h"
+#include "fp_detect.h"
+#include "ips_context.h"
+#include "regex_offload.h"
+
+Trace TRACE_NAME(detection);
+
+static THREAD_LOCAL RegexOffload* offloader = nullptr;
+>>>>>>> offload
 
 //--------------------------------------------------------------------------
 // basic de
 //--------------------------------------------------------------------------
 
 void DetectionEngine::thread_init()
+<<<<<<< HEAD
 {
     const SnortConfig* sc = SnortConfig::get_conf();
     FastPatternConfig* fp = sc->fast_pattern_config;
@@ -190,10 +226,58 @@ Packet* DetectionEngine::set_next_packet(const Packet* parent, Flow* flow)
     }
 
     packet_gettimeofday(&c->pkth->ts);
+=======
+{ offloader = new RegexOffload(32); }  // FIXIT-H get size (threads < contexts)
+
+void DetectionEngine::thread_term()
+{ delete offloader; }
+
+DetectionEngine::DetectionEngine()
+{ context = Snort::get_switcher()->interrupt(); }
+
+DetectionEngine::~DetectionEngine()
+{
+    finish_packet(context->packet);
+    ContextSwitcher* sw = Snort::get_switcher();
+
+    if ( context == sw->get_context() )
+        sw->complete();
+}
+
+Packet* DetectionEngine::get_packet()
+{ return context->packet; }
+
+IpsContext* DetectionEngine::get_context()
+{ return Snort::get_switcher()->get_context(); }
+
+SF_EVENTQ* DetectionEngine::get_event_queue()
+{ return Snort::get_switcher()->get_context()->equeue; }
+
+Packet* DetectionEngine::get_current_packet()
+{ return Snort::get_switcher()->get_context()->packet; }
+
+void DetectionEngine::set_encode_packet(Packet* p)
+{ Snort::get_switcher()->get_context()->encode_packet = p; }
+
+Packet* DetectionEngine::get_encode_packet()
+{ return Snort::get_switcher()->get_context()->encode_packet; }
+
+MpseStash* DetectionEngine::get_stash()
+{ return Snort::get_switcher()->get_context()->stash; }
+
+// we need to stay in the current context until rebuild is successful
+// any events while rebuilding will be logged against the current packet
+Packet* DetectionEngine::set_packet()
+{
+    const IpsContext* c = Snort::get_switcher()->get_next();
+    Packet* p = c->packet;
+
+>>>>>>> offload
     p->pkth = c->pkth;
     p->data = c->buf;
     p->pkt = c->buf;
 
+<<<<<<< HEAD
     // normal rebuild
     if ( parent )
     {
@@ -378,6 +462,59 @@ void DetectionEngine::disable_all(Packet* p)
     debug_logf(detection_trace, TRACE_PKT_DETECTION, p,
         "Disabled all detect, packet %" PRIu64"\n", p->context->packet_number);
 }
+=======
+    p->reset();
+    return p;
+}
+
+void DetectionEngine::finish_packet(Packet* p)
+{
+    log_events(p);
+    reset(p);
+
+    if ( p->endianness )
+    {
+        delete p->endianness;
+        p->endianness = nullptr;
+    }
+}
+
+uint8_t* DetectionEngine::get_buffer(unsigned& max)
+{
+    max = IpsContext::buf_size;
+    return Snort::get_switcher()->get_context()->buf;
+}
+
+// similar to set_packet() because http_inspect does everything via the
+// splitter, ie before reassembly.  maybe that should change.  for now
+// we do it this way.
+void DetectionEngine::set_next_file_data(const DataPointer& dp)
+{
+    IpsContext* c = Snort::get_switcher()->get_next();
+    c->file_data = dp;
+}
+
+void DetectionEngine::get_next_file_data(DataPointer& dp)
+{
+    const IpsContext* c = Snort::get_switcher()->get_next();
+    dp = c->file_data;
+}
+
+void DetectionEngine::set_file_data(const DataPointer& dp)
+{ Snort::get_switcher()->get_context()->file_data = dp; }
+
+void DetectionEngine::get_file_data(DataPointer& dp)
+{ dp = Snort::get_switcher()->get_context()->file_data; }
+
+void DetectionEngine::set_data(unsigned id, IpsContextData* p)
+{ Snort::get_switcher()->get_context()->set_context_data(id, p); }
+
+IpsContextData* DetectionEngine::get_data(unsigned id)
+{ return Snort::get_switcher()->get_context()->get_context_data(id); }
+
+void DetectionEngine::disable_all(Packet* p)
+{ p->context->active_rules = IpsContext::NONE; }
+>>>>>>> offload
 
 bool DetectionEngine::all_disabled(Packet* p)
 { return p->context->active_rules == IpsContext::NONE; }
@@ -386,9 +523,12 @@ void DetectionEngine::disable_content(Packet* p)
 {
     if ( p->context->active_rules == IpsContext::CONTENT )
         p->context->active_rules = IpsContext::NON_CONTENT;
+<<<<<<< HEAD
 
     debug_logf(detection_trace, TRACE_PKT_DETECTION, p,
         "Disabled content detect, packet %" PRIu64"\n", p->context->packet_number);
+=======
+>>>>>>> offload
 }
 
 void DetectionEngine::enable_content(Packet* p)
@@ -403,16 +543,22 @@ IpsContext::ActiveRules DetectionEngine::get_detects(Packet* p)
 void DetectionEngine::set_detects(Packet* p, IpsContext::ActiveRules ar)
 { p->context->active_rules = ar; }
 
+<<<<<<< HEAD
 void DetectionEngine::set_check_tags(Packet* p, bool enable)
 { p->context->check_tags = enable; }
 
 bool DetectionEngine::get_check_tags(Packet* p)
 { return p->context->check_tags; }
+=======
+bool DetectionEngine::offloaded(Packet* p)
+{ return p->flow and p->flow->is_offloaded(); }
+>>>>>>> offload
 
 //--------------------------------------------------------------------------
 // offload / onload
 //--------------------------------------------------------------------------
 
+<<<<<<< HEAD
 bool DetectionEngine::do_offload(Packet* p)
 {
     ContextSwitcher* sw = Analyzer::get_switcher();
@@ -484,10 +630,28 @@ void DetectionEngine::idle()
 
         offloader->stop();
     }
+=======
+void DetectionEngine::idle()
+{
+    if ( !offloader )
+        return;
+
+    while ( offloader->count() )
+    {
+        trace_logf(detection, "%lu de::sleep\n", pc.total_from_daq);
+        const struct timespec blip = { 0, 1 };
+        nanosleep(&blip, nullptr);
+        onload();
+    }
+    trace_logf(detection, "%lu de::idle (r=%d)\n", pc.total_from_daq, offloader->count());
+
+    offloader->stop();
+>>>>>>> offload
 }
 
 void DetectionEngine::onload(Flow* flow)
 {
+<<<<<<< HEAD
     if ( flow->is_suspended() )
         pc.onload_waits++;
 
@@ -499,11 +663,22 @@ void DetectionEngine::onload(Flow* flow)
         resume_ready_suspends(flow->context_chain); // FIXIT-M makes onload reentrant-safe
         onload();
     }
+=======
+    while ( flow->is_offloaded() )
+    {
+        const struct timespec blip = { 0, 1 };
+        trace_logf(detection, "%lu de::sleep\n", pc.total_from_daq);
+        nanosleep(&blip, nullptr);
+        onload();
+    }
+    assert(!Snort::get_switcher()->on_hold(flow));
+>>>>>>> offload
     assert(!offloader->on_hold(flow));
 }
 
 void DetectionEngine::onload()
 {
+<<<<<<< HEAD
     // cppcheck-suppress unreadVariable
     Profile profile(mpsePerfStats);
     Packet* p;
@@ -578,12 +753,64 @@ void DetectionEngine::wait_for_context()
         // cppcheck-suppress knownConditionTrueFalse
         while ( !sw->idle_count() );
     }
+=======
+    unsigned id;
+
+    if ( !offloader->get(id) )
+        return;
+
+    ContextSwitcher* sw = Snort::get_switcher();
+    IpsContext* c = sw->get_context(id);
+    assert(c);
+
+    trace_logf(detection, "%lu de::onload %u (r=%d)\n",
+        pc.total_from_daq, id, offloader->count());
+
+    Packet* p = c->packet;
+    p->flow->clear_offloaded();
+
+    sw->resume(id);
+
+    fp_onload(p);
+    finish_packet(p);
+
+    InspectorManager::clear(p);
+    sw->complete();
+}
+
+bool DetectionEngine::offload(Packet* p)
+{
+    ContextSwitcher* sw = Snort::get_switcher();
+
+    if ( p->type() != PktType::PDU or (p->dsize < snort_conf->offload_limit) or !sw->can_hold() )
+    {
+        fp_local(p);
+        return false;
+    }
+    assert(p == p->context->packet);
+    onload(p->flow);  // FIXIT-L just assert !offloaded?
+
+    assert(p->context == sw->get_context());
+    unsigned id = sw->suspend();
+
+    trace_logf(detection, "%lu de::offload %u (r=%d)\n",
+        pc.total_from_daq, id, offloader->count());
+
+    p->flow->set_offloaded();
+    p->context->conf = snort_conf;
+
+    offloader->put(id, p);
+    pc.offloads++;
+
+    return true;
+>>>>>>> offload
 }
 
 //--------------------------------------------------------------------------
 // detection / inspection
 //--------------------------------------------------------------------------
 
+<<<<<<< HEAD
 bool DetectionEngine::detect(Packet* p, bool offload_ok)
 {
     assert(p);
@@ -594,19 +821,40 @@ bool DetectionEngine::detect(Packet* p, bool offload_ok)
     if ( p->packet_flags & PKT_PASS_RULE )
         return false;
 
+=======
+bool DetectionEngine::detect(Packet* p)
+{
+    assert(p);
+    Profile profile(detectPerfStats);
+    
+    if ( !p->ptrs.ip_api.is_valid() )
+        return false;
+    
+    if ( p->packet_flags & PKT_PASS_RULE )
+        return false;
+        
+>>>>>>> offload
     if ( PacketLatency::fastpath() )
         return false;
 
     // FIXIT-M restrict detect to current ip layer
+<<<<<<< HEAD
     // Currently, if a rule is found on any IP layer, we perform the detect routine
     // on the entire packet. Instead, we should only perform detect on that layer!!
     switch ( p->type() )
     {
     case PktType::PDU:
+=======
+    // Curently, if a rule is found on any IP layer, we perform the detect routine
+    // on the entire packet. Instead, we should only perform detect on that layer!!
+    switch ( p->type() )
+    {
+>>>>>>> offload
     case PktType::IP:
     case PktType::TCP:
     case PktType::UDP:
     case PktType::ICMP:
+<<<<<<< HEAD
     case PktType::FILE:
     case PktType::USER:
         if ( offload_ok and p->flow )
@@ -614,6 +862,11 @@ bool DetectionEngine::detect(Packet* p, bool offload_ok)
 
         fp_full(p);
         break;
+=======
+    case PktType::PDU:
+    case PktType::FILE:
+        return offload(p);
+>>>>>>> offload
 
     default:
         break;
@@ -621,12 +874,17 @@ bool DetectionEngine::detect(Packet* p, bool offload_ok)
     return false;
 }
 
+<<<<<<< HEAD
 bool DetectionEngine::inspect(Packet* p)
+=======
+void DetectionEngine::inspect(Packet* p)
+>>>>>>> offload
 {
     bool inspected = false;
     {
         PacketLatency::Context pkt_latency_ctx { p };
 
+<<<<<<< HEAD
         InspectorManager::probe_first(p);
         if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
         {
@@ -635,15 +893,28 @@ bool DetectionEngine::inspect(Packet* p)
                     DECODE_ERR_CKSUM_ALL) )
             {
                 p->active->drop_packet(p);
+=======
+        if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
+        {
+            if ( SnortConfig::inline_mode() and
+                SnortConfig::checksum_drop(p->ptrs.decode_flags & DECODE_ERR_CKSUM_ALL) )
+            {
+                Active::drop_packet(p);
+>>>>>>> offload
             }
         }
         else
         {
             enable_content(p);
+<<<<<<< HEAD
+=======
+            p->alt_dsize = 0;  // FIXIT-H should be redundant
+>>>>>>> offload
 
             InspectorManager::execute(p);
             inspected = true;
 
+<<<<<<< HEAD
             if ( !all_disabled(p) )
             {
                 if ( PacketTracer::is_daq_activated() )
@@ -658,6 +929,46 @@ bool DetectionEngine::inspect(Packet* p)
     finish_inspect(p, inspected);
 
     return true;
+=======
+            Active::apply_delayed_action(p);
+
+            if ( !all_disabled(p) )
+            {
+                if ( detect(p) )
+                    return;
+            }
+        }
+        enable_tags();
+
+        // By checking tagging here, we make sure that we log the
+        // tagged packet whether it generates an alert or not.
+
+        if ( p->has_ip() )
+            check_tags(p);
+
+        if ( offloaded(p) )
+            return;
+
+        // clear closed sessions here after inspection since non-stream
+        // inspectors may depend on flow information
+        // FIXIT-H but this result in double clearing?  should normal
+        // clear_session() calls be deleted from stream?  this is a
+        // performance hit on short-lived flows
+
+        Stream::check_flow_closed(p);
+    }
+
+    Profile profile(eventqPerfStats);
+
+    log_events(p);
+
+    Stream::check_flow_block_pending(p);
+
+    if ( inspected )
+        InspectorManager::clear(p);
+
+    reset(p);
+>>>>>>> offload
 }
 
 //--------------------------------------------------------------------------
@@ -692,9 +1003,15 @@ int DetectionEngine::queue_event(const OptTreeNode* otn)
     return 0;
 }
 
+<<<<<<< HEAD
 int DetectionEngine::queue_event(unsigned gid, unsigned sid)
 {
     OptTreeNode* otn = OtnLookup(SnortConfig::get_conf()->otn_map, gid, sid);
+=======
+int DetectionEngine::queue_event(unsigned gid, unsigned sid, RuleType type)
+{
+    OptTreeNode* otn = GetOTN(gid, sid);
+>>>>>>> offload
 
     if ( !otn )
         return 0;
@@ -707,6 +1024,10 @@ int DetectionEngine::queue_event(unsigned gid, unsigned sid)
 
     en->otn = otn;
     en->rtn = nullptr;  // lookup later after ips policy selection
+<<<<<<< HEAD
+=======
+    en->type = type;
+>>>>>>> offload
 
     if ( sfeventq_add(pq, en) )
         return -1;
@@ -725,7 +1046,11 @@ static int log_events(void* event, void* user)
     {
         en->rtn = getRtnFromOtn(en->otn);
 
+<<<<<<< HEAD
         if ( !en->rtn || !en->rtn->enabled() )
+=======
+        if ( !en->rtn )
+>>>>>>> offload
             return 0;  // not enabled
     }
 
@@ -738,20 +1063,32 @@ static int log_events(void* event, void* user)
 /*
 **  We return whether we logged events or not.  We've add a eventq user
 **  structure so we can track whether the events logged were rule events
+<<<<<<< HEAD
 **  or builtin events.  The reason being that we don't want
 **  to flush a TCP stream for builtin events, and cause
+=======
+**  or preprocessor/decoder events.  The reason being that we don't want
+**  to flush a TCP stream for preprocessor/decoder events, and cause
+>>>>>>> offload
 **  early flushing of the stream.
 */
 int DetectionEngine::log_events(Packet* p)
 {
+<<<<<<< HEAD
     // cppcheck-suppress unreadVariable
     Profile profile(eventqPerfStats);
+=======
+>>>>>>> offload
     SF_EVENTQ* pq = p->context->equeue;
     sfeventq_action(pq, ::log_events, (void*)p);
     return 0;
 }
 
+<<<<<<< HEAD
 void DetectionEngine::clear_events(Packet* p)
+=======
+void DetectionEngine::reset(Packet* p)
+>>>>>>> offload
 {
     SF_EVENTQ* pq = p->context->equeue;
     pc.log_limit += sfeventq_reset(pq);

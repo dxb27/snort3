@@ -76,6 +76,7 @@
 #define SSNFLAG_CLIENT_SWAPPED      0x00400000
 
 #define SSNFLAG_PROXIED             0x01000000
+<<<<<<< HEAD
 #define SSNFLAG_NO_DETECT_TO_CLIENT 0x02000000
 #define SSNFLAG_NO_DETECT_TO_SERVER 0x04000000
 
@@ -84,6 +85,8 @@
 
 #define SSNFLAG_HARD_EXPIRATION     0x40000000
 #define SSNFLAG_KEEP_FLOW           0x80000000
+=======
+>>>>>>> offload
 
 #define SSNFLAG_NONE                0x00000000 /* nothing, an MT bag of chips */
 
@@ -101,11 +104,21 @@
 #define STREAM_STATE_BLOCK_PENDING     0x0080
 #define STREAM_STATE_RELEASING         0x0100
 
+<<<<<<< HEAD
 class Continuation;
 class BitOp;
 class Session;
 
 namespace snort
+=======
+#define FLOW_IS_OFFLOADED              0x01
+#define FLOW_WAS_OFFLOADED             0x02  // FIXIT-L debug only
+
+// FIXIT-L move to appid class if/when the application ids array
+// is moved
+typedef int32_t AppId;
+enum AppProtoIdIndex
+>>>>>>> offload
 {
 class FlowHAState;
 struct FlowKey;
@@ -198,6 +211,7 @@ public:
     void set_ttl(Packet*, bool client);
     void set_mpls_layer_per_dir(Packet*);
     Layer get_mpls_layer_per_dir(bool);
+<<<<<<< HEAD
     void swap_roles();
     void set_service(Packet*, const char* new_service);
     bool get_attr(const std::string& key, int32_t& val) const;
@@ -245,6 +259,25 @@ public:
     void set_to_server_detection(bool enable);
 
     int get_ignore_direction() const
+=======
+
+    uint32_t update_session_flags(uint32_t flags)
+    { return ssn_state.session_flags = flags; }
+
+    uint32_t set_session_flags(uint32_t flags)
+    { return ssn_state.session_flags |= flags; }
+
+    uint32_t get_session_flags()
+    { return ssn_state.session_flags; }
+
+    uint32_t test_session_flags(uint32_t flags)
+    { return (ssn_state.session_flags & flags) != 0; }
+
+    uint32_t clear_session_flags(uint32_t flags)
+    { return ssn_state.session_flags &= ~flags; }
+
+    int get_ignore_direction()
+>>>>>>> offload
     { return ssn_state.ignore_direction; }
 
     int set_ignore_direction(char ignore_direction)
@@ -398,6 +431,7 @@ public:
         deferred_trust.finalize(active);
     }
 
+<<<<<<< HEAD
     void trust();
 
     bool trust_is_deferred() const
@@ -429,6 +463,16 @@ public:
     uint64_t fetch_add_inspection_duration();
 
     bool handle_allowlist();
+=======
+    bool is_offloaded() const
+    { return flow_flags & FLOW_IS_OFFLOADED; }
+
+    void set_offloaded()
+    { flow_flags |= (FLOW_IS_OFFLOADED|FLOW_WAS_OFFLOADED); }
+
+    void clear_offloaded()
+    { flow_flags &= ~FLOW_IS_OFFLOADED; }
+>>>>>>> offload
 
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
@@ -447,12 +491,19 @@ public:  // FIXIT-M privatize if possible
     PktType pkt_type = PktType::NONE; // ^^
 
     // these fields are always set; not zeroed
+<<<<<<< HEAD
     Flow* prev = nullptr;
     Flow* next = nullptr;
     Session* session = nullptr;
     Inspector* ssn_client = nullptr;
     Inspector* ssn_server = nullptr;
     Continuation* ips_cont = nullptr;
+=======
+    uint64_t flow_flags;  // FIXIT-H required to ensure atomic?
+    Flow* prev, * next;
+    Inspector* ssn_client;
+    Inspector* ssn_server;
+>>>>>>> offload
 
     long last_data_seen = 0;
     Layer mpls_client = {};

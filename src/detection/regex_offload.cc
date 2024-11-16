@@ -1,5 +1,9 @@
 //--------------------------------------------------------------------------
+<<<<<<< HEAD
 // Copyright (C) 2016-2024 Cisco and/or its affiliates. All rights reserved.
+=======
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+>>>>>>> offload
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,15 +28,21 @@
 
 #include "regex_offload.h"
 
+<<<<<<< HEAD
 #include <cassert>
 
 #include <atomic>
+=======
+#include <assert.h>
+
+>>>>>>> offload
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <vector>
 #include <thread>
 
+<<<<<<< HEAD
 #include "fp_detect.h"
 #include "ips_context.h"
 #include "latency/packet_latency.h"
@@ -45,10 +55,17 @@
 using namespace snort;
 
 // FIXIT-L this could be offloader specific
+=======
+#include "main/snort_config.h"
+#include "fp_detect.h"
+#include "ips_context.h"
+
+>>>>>>> offload
 struct RegexRequest
 {
     Packet* packet = nullptr;
 
+<<<<<<< HEAD
     std::thread* thread;
     std::mutex mutex;
     std::condition_variable cond;
@@ -74,6 +91,19 @@ RegexOffload* RegexOffload::get_offloader(unsigned max, bool async)
 
 //--------------------------------------------------------------------------
 // base offload implementation
+=======
+    std::thread* offload;
+    std::mutex mutex;
+    std::condition_variable cond;
+
+    unsigned id = 0;
+    bool onload = false;
+    bool go = true;
+};
+
+//--------------------------------------------------------------------------
+// foo
+>>>>>>> offload
 //--------------------------------------------------------------------------
 
 RegexOffload::RegexOffload(unsigned max)
@@ -81,7 +111,12 @@ RegexOffload::RegexOffload(unsigned max)
     for ( unsigned i = 0; i < max; ++i )
     {
         RegexRequest* req = new RegexRequest;
+<<<<<<< HEAD
         idle.emplace_back(req);
+=======
+        req->offload = new std::thread(worker, req);
+        idle.push_back(req);
+>>>>>>> offload
     }
 }
 
@@ -89,13 +124,23 @@ RegexOffload::~RegexOffload()
 {
     assert(busy.empty());
 
+<<<<<<< HEAD
     for ( const auto* req : idle )
         delete req;
+=======
+    for ( auto* req : idle )
+    {
+        req->offload->join();
+        delete req->offload;
+        delete req;
+    }
+>>>>>>> offload
 }
 
 void RegexOffload::stop()
 {
     assert(busy.empty());
+<<<<<<< HEAD
 }
 
 bool RegexOffload::on_hold(const Flow* f) const
@@ -328,5 +373,75 @@ void ThreadRegexOffload::worker(
     // FIXIT-M break this over-coupling. In reality we shouldn't be evaluating latency in offload.
     PacketLatency::tterm();
     RuleLatency::tterm();
+=======
+
+    for ( auto* req : idle )
+    {
+        req->go = false;
+        std::unique_lock<std::mutex> lock(req->mutex);
+        req->cond.notify_one();
+    }
+}
+
+void RegexOffload::worker(RegexRequest* req)
+{
+    while ( true )
+    {
+        std::unique_lock<std::mutex> lock(req->mutex);
+        req->cond.wait_for(lock, std::chrono::seconds(1));  // FIXIT-L w/o some hangs upon join
+
+        if ( !req->go )
+            break;
+
+        if ( !req->packet )
+            continue;
+
+        assert(req->packet->flow->is_offloaded());
+        snort_conf = req->packet->context->conf;  // FIXIT-H reload issue
+        fp_offload(req->packet);
+        req->onload = true;
+    }
+}
+
+void RegexOffload::put(unsigned id, Packet* p)
+{
+    assert(!idle.empty());
+    RegexRequest* req = idle.front();
+
+    idle.pop_front();  // FIXTHIS-H use splice to move instead
+    busy.push_back(req);
+
+    req->id = id;
+    req->onload = false;
+    req->packet = p;
+
+    std::unique_lock<std::mutex> lock(req->mutex);
+    req->cond.notify_one();
+}
+
+bool RegexOffload::get(unsigned& id)
+{
+    assert(!busy.empty());
+    RegexRequest* req = busy.front();  // FIXTHIS-H onload any order
+
+    if ( !req->onload )
+        return false;
+
+    id = req->id;
+    busy.pop_front();  // FIXTHIS-H use splice to move instead
+    req->packet = nullptr;
+    idle.push_back(req);
+    return true;
+}
+
+bool RegexOffload::on_hold(Flow* f)
+{
+    for ( auto* req : busy )
+    {
+        if ( req->packet->flow == f )
+            return true;
+    }
+    return false;
+>>>>>>> offload
 }
 

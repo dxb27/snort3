@@ -553,6 +553,7 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     switch (session_data->section_type[source_id])
     {
     case SEC_REQUEST:
+<<<<<<< HEAD
         current_section = new HttpMsgRequest(
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
@@ -582,6 +583,33 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         break;
     case SEC_TRAILER:
         current_section = new HttpMsgTrailer(
+=======
+        session_data->latest_section = new HttpMsgRequest(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
+        break;
+    case SEC_STATUS:
+        session_data->latest_section = new HttpMsgStatus(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
+        break;
+    case SEC_HEADER:
+        session_data->latest_section = new HttpMsgHeader(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
+        break;
+    case SEC_BODY_CL:
+        session_data->latest_section = new HttpMsgBodyCl(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
+        break;
+    case SEC_BODY_OLD:
+        session_data->latest_section = new HttpMsgBodyOld(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
+        break;
+    case SEC_BODY_CHUNK:
+        session_data->latest_section = new HttpMsgBodyChunk(
+            data, dsize, session_data, source_id, buf_owner, flow, params);
+        break;
+    case SEC_TRAILER:
+        session_data->latest_section = new HttpMsgTrailer(
+>>>>>>> offload
             data, dsize, session_data, source_id, buf_owner, flow, params);
         break;
     default:
@@ -593,16 +621,25 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         return;
     }
 
+<<<<<<< HEAD
     current_section->analyze();
     current_section->gen_events();
     if (!session_data->partial_flush[source_id])
         current_section->update_flow();
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;
+=======
+    session_data->latest_section->analyze();
+    session_data->latest_section->update_flow();
+>>>>>>> offload
 
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {
+<<<<<<< HEAD
         current_section->print_section(HttpTestManager::get_output_file());
+=======
+        session_data->latest_section->print_section(HttpTestManager::get_output_file());
+>>>>>>> offload
         fflush(HttpTestManager::get_output_file());
         if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
         {
@@ -613,6 +650,7 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     }
 #endif
 
+<<<<<<< HEAD
     current_section->publish(pub_id);
     if (p != nullptr)
     {
@@ -631,6 +669,10 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         }
 #endif
     }
+=======
+    session_data->latest_section->publish();
+    return session_data->latest_section->get_detect_buf();
+>>>>>>> offload
 }
 
 void HttpInspect::clear(Packet* p)

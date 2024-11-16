@@ -23,16 +23,25 @@
 
 #include "stream.h"
 
+<<<<<<< HEAD
 #include <cassert>
 #include <mutex>
 
 #include "detection/detection_engine.h"
 #include "flow/flow_cache.h"
+=======
+#include <assert.h>
+
+#include "detection/detection_engine.h"
+>>>>>>> offload
 #include "flow/flow_control.h"
 #include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/prune_stats.h"
+<<<<<<< HEAD
 #include "framework/data_bus.h"
+=======
+>>>>>>> offload
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "packet_io/active.h"
@@ -183,11 +192,16 @@ void Stream::check_flow_closed(Packet* p)
     if (flow->session_state & STREAM_STATE_CLOSED)
     {
         assert(flow_con);
+<<<<<<< HEAD
 
         // Will no longer have flow so save use_direct_inject state on packet.
         if ( flow->flags.use_direct_inject )
             p->packet_flags |= PKT_USE_DIRECT_INJECT;
 
+=======
+        flow->session->cleanup(p);
+        flow_con->delete_flow(flow, PruneReason::NONE);
+>>>>>>> offload
         p->flow = nullptr;
 
         // this will get called on each onload
@@ -375,7 +389,38 @@ bool Stream::prune_flows()
     if ( !flow_con )
         return false;
 
+<<<<<<< HEAD
     return flow_con->prune_multiple(PruneReason::MEMCAP, false);
+=======
+    flow_con->purge_flows(PktType::IP);
+    flow_con->purge_flows(PktType::ICMP);
+    flow_con->purge_flows(PktType::TCP);
+    flow_con->purge_flows(PktType::UDP);
+    flow_con->purge_flows(PktType::PDU);
+    flow_con->purge_flows(PktType::FILE);
+}
+
+void Stream::timeout_flows(time_t cur_time)
+{
+    if ( !flow_con )
+        return;
+
+    // FIXIT-M batch here or loop vs looping over idle?
+    flow_con->timeout_flows(cur_time);
+}
+
+void Stream::prune_flows()
+{
+    if ( !flow_con )
+        return;
+
+    flow_con->prune_one(PruneReason::MEMCAP, false);
+}
+
+bool Stream::expected_flow(Flow* f, Packet* p)
+{
+    return flow_con->expected_flow(f, p) != SSN_DIR_NONE;
+>>>>>>> offload
 }
 
 //-------------------------------------------------------------------------
@@ -598,8 +643,17 @@ bool Stream::blocked_flow(Packet* p)
         ((p->is_from_client()) &&
         (flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT)) )
     {
+<<<<<<< HEAD
         DetectionEngine::disable_content(p);
         p->active->drop_packet(p);
+=======
+        DebugFormat(DEBUG_STREAM_STATE,
+            "Blocking %s packet as session was blocked\n",
+            p->is_from_server() ?  "server" : "client");
+
+        DetectionEngine::disable_content(p);
+        Active::drop_packet(p);
+>>>>>>> offload
         active_response(p, flow);
         p->active->set_drop_reason("stream");
         if (PacketTracer::is_active())
@@ -616,6 +670,13 @@ bool Stream::ignored_flow(Flow* flow, Packet* p)
         ((p->is_from_client()) &&
         (flow->ssn_state.ignore_direction & SSN_DIR_FROM_SERVER)) )
     {
+<<<<<<< HEAD
+=======
+        DebugFormat(DEBUG_STREAM_STATE,
+            "Stream Ignoring packet from %s. Session marked as ignore\n",
+            p->is_from_client() ? "sender" : "responder");
+
+>>>>>>> offload
         DetectionEngine::disable_all(p);
         return true;
     }

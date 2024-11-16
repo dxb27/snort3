@@ -27,6 +27,10 @@
 #include "modbus_paf.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 
 #include "modbus.h"
 #include "modbus_module.h"

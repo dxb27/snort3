@@ -111,10 +111,20 @@ protected:
     int do_zero_byte_flush(snort::Packet*, uint32_t pkt_flags);
     uint32_t get_q_footprint();
     uint32_t get_q_sequenced();
+<<<<<<< HEAD
     bool is_q_sequenced();
     void final_flush(snort::Packet*, uint32_t dir);
     bool splitter_finish(snort::Flow* flow);
     void purge_to_seq(uint32_t flush_seq);
+=======
+    void final_flush(Packet*, uint32_t dir);
+    uint32_t get_reverse_packet_dir(const Packet*);
+    uint32_t get_forward_packet_dir(const Packet*);
+    int32_t flush_pdu_ips(uint32_t*);
+    void fallback();
+    int32_t flush_pdu_ackd(uint32_t* flags);
+    int purge_to_seq(uint32_t flush_seq);
+>>>>>>> offload
 
     bool fin_no_gap(const TcpSegmentNode&);
     bool fin_acked_no_gap(const TcpSegmentNode&);

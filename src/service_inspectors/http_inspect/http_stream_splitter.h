@@ -39,17 +39,27 @@ public:
         source_id(is_client_to_server ? HttpCommon::SRC_CLIENT : HttpCommon::SRC_SERVER) {}
     Status scan(snort::Packet* pkt, const uint8_t* data, uint32_t length, uint32_t not_used,
         uint32_t* flush_offset) override;
+<<<<<<< HEAD
     Status scan(snort::Flow* flow, const uint8_t* data, uint32_t length, uint32_t* flush_offset) override;
     const snort::StreamBuffer reassemble(snort::Flow* flow, unsigned total, unsigned, const
+=======
+    const StreamBuffer reassemble(Flow* flow, unsigned total, unsigned, const
+>>>>>>> offload
         uint8_t* data, unsigned len, uint32_t flags, unsigned& copied) override;
     bool finish(snort::Flow* flow) override;
     void prep_partial_flush(snort::Flow* flow, uint32_t num_flush) override;
     bool is_paf() override { return true; }
+<<<<<<< HEAD
     static StreamSplitter::Status status_value(StreamSplitter::Status ret_val, bool http2 = false);
 
     // FIXIT-M should return actual packet buffer size
     unsigned max(snort::Flow*) override { return HttpEnums::MAX_OCTETS; }
     void go_away() override {}
+=======
+
+    // FIXIT-M should return actual packet buffer size
+    unsigned max(Flow*) override { return HttpEnums::MAX_OCTETS; }
+>>>>>>> offload
 
 private:
     void prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset, HttpCommon::SectionType

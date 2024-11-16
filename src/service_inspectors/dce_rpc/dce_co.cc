@@ -1341,7 +1341,11 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     if ( frag_data )
     {
+<<<<<<< HEAD
         rpkt = DCE2_GetRpkt(DetectionEngine::get_current_packet(), *rtype, frag_data, frag_len);
+=======
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, *rtype, frag_data, frag_len);
+>>>>>>> offload
 
         if ( rpkt and seg_data )
         {
@@ -1351,7 +1355,11 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     }
     else if ( seg_data )
     {
+<<<<<<< HEAD
         rpkt = DCE2_GetRpkt(DetectionEngine::get_current_packet(), *rtype, seg_data, seg_len);
+=======
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, *rtype, seg_data, seg_len);
+>>>>>>> offload
     }
 
     return rpkt;
@@ -2245,18 +2253,31 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     switch (sd->trans)
     {
     case DCE2_TRANS_TYPE__SMB:
+<<<<<<< HEAD
         rpkt = DCE2_GetRpkt(p, DCE2_RPKT_TYPE__SMB_CO_SEG, data_ptr, data_len);
 
         if ( !rpkt || !rpkt->data )
             return nullptr;
 
         set_smb_reassembled_data(const_cast<uint8_t*>(rpkt->data),
+=======
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__SMB_CO_SEG, data_ptr, data_len);
+
+        if ( !rpkt )
+            return nullptr;
+
+        DCE2_SmbSetRdata((DCE2_SmbSsnData*)sd, (uint8_t*)rpkt->data,
+>>>>>>> offload
             (uint16_t)(rpkt->dsize - smb_hdr_len));
         break;
 
     case DCE2_TRANS_TYPE__TCP:
         // FIXIT-M add HTTP cases when it is ported
+<<<<<<< HEAD
         rpkt = DCE2_GetRpkt(p, DCE2_RPKT_TYPE__TCP_CO_SEG, data_ptr, data_len);
+=======
+        rpkt = DCE2_GetRpkt(sd->wire_pkt, DCE2_RPKT_TYPE__TCP_CO_SEG, data_ptr, data_len);
+>>>>>>> offload
         break;
 
     default:
@@ -2325,7 +2346,12 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
         break;
 
     default:
+<<<<<<< HEAD
         assert(false);
+=======
+        DebugFormat(DEBUG_DCE_COMMON, "Invalid transport type: %d\n",
+            sd->trans);
+>>>>>>> offload
         return;
     }
 

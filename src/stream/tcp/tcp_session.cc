@@ -50,7 +50,10 @@
 
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
+<<<<<<< HEAD
 #include "framework/data_bus.h"
+=======
+>>>>>>> offload
 #include "log/log.h"
 #include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
@@ -129,9 +132,15 @@ void TcpSession::restart(Packet* p)
     assert(p->ptrs.tcph);
     assert(p->flow == flow);
 
+<<<<<<< HEAD
     DetectionEngine::onload(flow);
     TcpStreamTracker* talker;
     TcpStreamTracker* listener;
+=======
+    assert(!p or p->flow == flow);
+    DetectionEngine::onload(flow);
+    TcpStreamTracker* talker, * listener;
+>>>>>>> offload
 
     if (p->is_from_server())
     {
@@ -168,7 +177,31 @@ void TcpSession::restart(Packet* p)
 void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
 {
     assert(!p or p->flow == flow);
+<<<<<<< HEAD
     if ( !tcp_init )
+=======
+    DetectionEngine::onload(flow);
+
+    if ( client->reassembler )
+    {
+        if ( flush_segments )
+            client->reassembler->flush_queued_segments(flow, true, p);
+        client->reassembler->purge_segment_list();
+    }
+
+    if ( server->reassembler )
+    {
+        if ( flush_segments )
+            server->reassembler->flush_queued_segments(flow, true, p);
+        server->reassembler->purge_segment_list();
+    }
+
+    if ( tcp_init )
+        tcpStats.released++;
+    else if ( lws_init )
+        tcpStats.no_pickups++;
+    else
+>>>>>>> offload
         return;
 
     tcp_init = false;
@@ -901,8 +934,19 @@ void TcpSession::check_events_and_actions(const TcpSegmentDescriptor& tsd)
     else
         TcpHAManager::process_deletion(*flow);
 
+<<<<<<< HEAD
     if ( pkt_action_mask & ACTION_DISABLE_INSPECTION )
         DetectionEngine::disable_all(p);
+=======
+    if (pkt_action_mask & ACTION_DISABLE_INSPECTION)
+    {
+        DetectionEngine::disable_all(p);
+
+        DebugFormat(DEBUG_STREAM_STATE,
+            "Stream Ignoring packet from %s. Session marked as ignore\n",
+            p->is_from_server() ? "server" : "client");
+    }
+>>>>>>> offload
 }
 
 bool TcpSession::ignore_this_packet(Packet* p)

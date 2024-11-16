@@ -122,5 +122,7 @@ void dump_rule_deps(const snort::SnortConfig*);
 void dump_rule_meta(const snort::SnortConfig*);
 void dump_rule_state(const snort::SnortConfig*);
 
+OptTreeNode* GetOTN(uint32_t gid, uint32_t sid);
+
 #endif
 

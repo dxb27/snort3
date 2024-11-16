@@ -72,7 +72,11 @@ public:
     bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
 
+<<<<<<< HEAD
     NORETURN_ASSERT void eval(Packet*) override;
+=======
+    void eval(Packet*) override;
+>>>>>>> offload
 
 public:
     StreamIpConfig* config;
@@ -97,6 +101,7 @@ bool StreamIp::configure(SnortConfig* sc)
     return true;
 }
 
+<<<<<<< HEAD
 void StreamIp::show(const SnortConfig*) const
 {
     if ( !config )
@@ -107,6 +112,15 @@ void StreamIp::show(const SnortConfig*) const
 }
 
 NORETURN_ASSERT void StreamIp::eval(Packet*)
+=======
+void StreamIp::show(SnortConfig* sc)
+{
+    ip_show(config);
+    defrag->show(sc);
+}
+
+void StreamIp::eval(Packet*)
+>>>>>>> offload
 {
     // session::process() instead
     assert(false);

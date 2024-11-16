@@ -25,7 +25,10 @@
 #include "imap.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
 #include "js_norm/js_pdf_norm.h"
+=======
+>>>>>>> offload
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -410,6 +413,10 @@ static const uint8_t* IMAP_HandleCommand(Packet* p, IMAPData* imap_ssn, const ui
         else
         {
             DetectionEngine::queue_event(GID_IMAP, IMAP_UNKNOWN_CMD);
+<<<<<<< HEAD
+=======
+            DebugMessage(DEBUG_IMAP, "No known command found\n");
+>>>>>>> offload
             return eol;
         }
     }
@@ -600,6 +607,10 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
             if ((*ptr != '*') && (*ptr != '+') && (*ptr != '\r') && (*ptr != '\n'))
             {
                 DetectionEngine::queue_event(GID_IMAP, IMAP_UNKNOWN_RESP);
+<<<<<<< HEAD
+=======
+                DebugMessage(DEBUG_IMAP, "Server response not found\n");
+>>>>>>> offload
             }
         }
 

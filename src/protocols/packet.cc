@@ -23,9 +23,12 @@
 
 #include "packet.h"
 
+<<<<<<< HEAD
 #include "detection/ips_context.h"
 #include "flow/expect_flow.h"
 #include "flow/flow_key.h"
+=======
+>>>>>>> offload
 #include "framework/endianness.h"
 #include "log/obfuscator.h"
 #include "main/snort_config.h"
@@ -53,7 +56,13 @@ Packet::Packet(bool packet_data)
         pkt = new uint8_t[Codec::PKT_MAX];
     }
 
+<<<<<<< HEAD
     active_inst = new Active();
+=======
+    obfuscator = nullptr;
+    endianness = nullptr;
+
+>>>>>>> offload
     reset();
 }
 
@@ -72,6 +81,15 @@ Packet::~Packet()
 
 void Packet::reset()
 {
+<<<<<<< HEAD
+=======
+    if ( obfuscator )
+        delete obfuscator;
+
+    if ( endianness )
+        delete endianness;  // FIXIT-L dce2 leaks in a few cases
+
+>>>>>>> offload
     flow = nullptr;
     packet_flags = 0;
     ts_packet_flags = 0;

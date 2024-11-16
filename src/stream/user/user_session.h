@@ -61,11 +61,19 @@ struct UserTracker
     void init();
     void term();
 
+<<<<<<< HEAD
     void process(snort::Packet*);
     void add_data(snort::Packet*);
     int scan(snort::Packet*, uint32_t&);
     void flush(struct snort::Packet*, unsigned, uint32_t);
     void detect(const struct snort::Packet*, const struct snort::StreamBuffer&, uint32_t, snort::Packet* up);
+=======
+    void process(Packet*);
+    void add_data(Packet*);
+    int scan(Packet*, uint32_t&);
+    void flush(struct Packet*, unsigned, uint32_t);
+    void detect(const struct Packet*, const struct StreamBuffer&, uint32_t, Packet* up);
+>>>>>>> offload
 
     std::list<UserSegment*> seg_list;
     snort::StreamSplitter* splitter;

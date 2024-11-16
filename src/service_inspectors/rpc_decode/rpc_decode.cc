@@ -38,7 +38,11 @@
 #include "config.h"
 #endif
 
+<<<<<<< HEAD
 #include "detection/detection_buf.h"
+=======
+#include "detection/detection_util.h"
+>>>>>>> offload
 #include "detection/detection_engine.h"
 #include "framework/data_bus.h"
 #include "log/messages.h"

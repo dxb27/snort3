@@ -1045,6 +1045,13 @@ void LogXrefs(TextLog* log, const Event& e)
  */
 static void LogCharData(TextLog* log, const uint8_t* data, int len)
 {
+<<<<<<< HEAD
+=======
+    const uint8_t* pb = data;
+    const uint8_t* end = data + len;
+    int lineCount = 0;
+
+>>>>>>> offload
     if ( !data )
         return;
 
@@ -1317,7 +1324,12 @@ void LogPayload(TextLog* log, Packet* p)
         {
             LogCharData(log, p->data, p->dsize);
 
+<<<<<<< HEAD
             DataPointer file_data = DetectionEngine::get_file_data(p->context);
+=======
+            DataPointer file_data;
+            DetectionEngine::get_file_data(file_data);
+>>>>>>> offload
 
             if ( file_data.len > 0 )
             {
@@ -1341,7 +1353,12 @@ void LogPayload(TextLog* log, Packet* p)
             {
                 LogNetData(log, p->data, p->dsize, p);
 
+<<<<<<< HEAD
                 DataPointer file_data = DetectionEngine::get_file_data(p->context);
+=======
+                DataPointer file_data;
+                DetectionEngine::get_file_data(file_data);
+>>>>>>> offload
 
                 if ( file_data.len > 0 )
                 {

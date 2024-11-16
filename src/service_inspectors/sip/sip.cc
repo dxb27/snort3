@@ -24,6 +24,10 @@
 #include "sip.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -89,6 +93,21 @@ SipFlowData::~SipFlowData()
 
 static SIPData* SetNewSIPData(Packet* p)
 {
+<<<<<<< HEAD
+=======
+    static int MaxSessionsAlerted = 0;
+    if (numSessions > config->maxNumSessions)
+    {
+        if (!MaxSessionsAlerted)
+            DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MAX_SESSIONS);
+        MaxSessionsAlerted = 1;
+        return NULL;
+    }
+    else
+    {
+        MaxSessionsAlerted = 0;
+    }
+>>>>>>> offload
     SipFlowData* fd = new SipFlowData;
     p->flow->set_flow_data(fd);
     return &fd->session;

@@ -26,6 +26,11 @@
 #include "sip_parser.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+#include "main/snort_debug.h"
+>>>>>>> offload
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
@@ -1179,7 +1184,14 @@ bool sip_parse(SIPMsg* msg, const char* buff, const char* end, SIP_PROTO_CONF* c
 
     /*Parse the body*/
     start = nextIndex;
+<<<<<<< HEAD
     uint16_t bodyLen = end - start;
+=======
+    msg->bodyLen = end - start;
+    /*Disable this check for TCP. Revisit this again when PAF enabled for SIP*/
+    if ((!msg->isTcp)&&(msg->content_len > msg->bodyLen))
+        DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MISMATCH_CONTENT_LEN);
+>>>>>>> offload
 
     if ((!msg->isTcp)&&(msg->content_len > bodyLen))
         DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MISMATCH_CONTENT_LEN);
@@ -1194,10 +1206,22 @@ bool sip_parse(SIPMsg* msg, const char* buff, const char* end, SIP_PROTO_CONF* c
     // Find out whether multiple SIP messages in this packet
     if ((!msg->isTcp) && (msg->content_len < bodyLen))
     {
+<<<<<<< HEAD
         if ( sip_startline_parse(msg, start + msg->content_len, end, &nextIndex, config) )
             DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MULTI_MSGS);
         else
             DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MISMATCH_CONTENT_LEN);
+=======
+        if (true == sip_startline_parse(msg, start + msg->content_len, end, &nextIndex,
+            config))
+        {
+            DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MULTI_MSGS);
+        }
+        else
+        {
+            DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MISMATCH_CONTENT_LEN);
+        }
+>>>>>>> offload
     }
     return status;
 }

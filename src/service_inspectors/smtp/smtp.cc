@@ -22,10 +22,15 @@
 
 #include "smtp.h"
 
+<<<<<<< HEAD
 #include <string>
 
 #include "detection/detection_engine.h"
 #include "js_norm/js_pdf_norm.h"
+=======
+#include "detection/detection_engine.h"
+#include "detection/detection_util.h"
+>>>>>>> offload
 #include "log/messages.h"
 #include "log/unified2.h"
 #include "profiler/profiler.h"
@@ -1236,9 +1241,12 @@ static void SMTP_ProcessServerPacket(
 
         if (smtp_ssn->state != STATE_TLS_DATA)
         {
+<<<<<<< HEAD
             update_eol_state(new_eol, smtp_ssn->server_eol);
             if ((config->max_response_line_len != 0) &&
                 (resp_line_len > config->max_response_line_len))
+=======
+>>>>>>> offload
             DetectionEngine::queue_event(GID_SMTP, SMTP_RESPONSE_OVERFLOW);
         }
 
@@ -1438,6 +1446,10 @@ int SmtpMime::handle_header_line(
         (header_line_len > config->max_header_line_len))
     {
         DetectionEngine::queue_event(GID_SMTP, SMTP_DATA_HDR_OVERFLOW);
+<<<<<<< HEAD
+=======
+
+>>>>>>> offload
     }
 
     /* Does VRT want data headers normalized?

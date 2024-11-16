@@ -76,7 +76,12 @@ void TcpEventLogger::log_internal_event(uint32_t eventSid)
     if (is_internal_event_enabled(SnortConfig::get_conf()->rate_filter_config, eventSid))
     {
         tcpStats.internalEvents++;
+<<<<<<< HEAD
         DetectionEngine::queue_event(GID_SESSION, eventSid);
+=======
+        DetectionEngine::queue_event(GENERATOR_INTERNAL, eventSid);
+        DebugFormat(DEBUG_STREAM, "Stream raised internal event %d\n", eventSid);
+>>>>>>> offload
     }
 }
 
@@ -87,12 +92,17 @@ void TcpEventLogger::log_tcp_events()
         uint32_t idx = ffs(tcp_events);
         if ( idx )
         {
+<<<<<<< HEAD
             DetectionEngine::queue_event(GID_STREAM_TCP, tcp_event_sids[idx].sid);
             if ( PacketTracer::is_active() )
                 PacketTracer::log("stream_tcp: TCP raised %u:%u %s\n",
                     GID_STREAM_TCP, tcp_event_sids[idx].sid,
                     tcp_event_sids[idx].event_description);
             tcp_events ^= tcp_event_sids[idx].event_id;
+=======
+            DetectionEngine::queue_event(GID_STREAM_TCP, tcp_event_sids[ idx ].sid);
+            tcp_events ^= tcp_event_sids[ idx ].event_id;
+>>>>>>> offload
             tcpStats.events++;
         }
     }

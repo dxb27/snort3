@@ -1,5 +1,9 @@
 //--------------------------------------------------------------------------
+<<<<<<< HEAD
 // Copyright (C) 2016-2024 Cisco and/or its affiliates. All rights reserved.
+=======
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+>>>>>>> offload
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -22,6 +26,7 @@
 #define REGEX_OFFLOAD_H
 
 // RegexOffload provides an interface to fast pattern search accelerators.
+<<<<<<< HEAD
 // There are two flavors: MPSE and thread.  The MpseRegexOffload interfaces to
 // an MPSE that is capable of regex offload such as the RXP whereas
 // ThreadRegexOffload implements the regex search in auxiliary threads w/o
@@ -38,11 +43,27 @@ class Flow;
 struct Packet;
 struct SnortConfig;
 }
+=======
+// currently implemented as a simple thread offload, but will become an 
+// abstract base class with true hardware offload subclasses.  for starters
+// the thread offload will "cheat" and tightly interface with fp_detect but
+// eventually morph into such a proper subclass as the offload api emerges.
+// presently all offload is per packet thread; packet threads do not share
+// offload resources.
+
+#include <condition_variable>
+#include <list>
+#include <mutex>
+#include <thread>
+
+struct Packet;
+>>>>>>> offload
 struct RegexRequest;
 
 class RegexOffload
 {
 public:
+<<<<<<< HEAD
     static RegexOffload* get_offloader(unsigned max, bool async);
     virtual ~RegexOffload();
 
@@ -63,10 +84,30 @@ protected:
     RegexOffload(unsigned max);
 
 protected:
+=======
+    RegexOffload(unsigned max);
+    ~RegexOffload();
+
+    void stop();
+
+    unsigned count()
+    { return busy.size(); }
+
+    void put(unsigned id, Packet*);
+    bool get(unsigned& id);
+
+    bool on_hold(class Flow*);
+
+private:
+    static void worker(RegexRequest*);
+
+private:
+>>>>>>> offload
     std::list<RegexRequest*> busy;
     std::list<RegexRequest*> idle;
 };
 
+<<<<<<< HEAD
 class MpseRegexOffload : public RegexOffload
 {
 public:
@@ -91,5 +132,7 @@ private:
     static void worker(RegexRequest*, const snort::SnortConfig*, unsigned id);
 };
 
+=======
+>>>>>>> offload
 #endif
 

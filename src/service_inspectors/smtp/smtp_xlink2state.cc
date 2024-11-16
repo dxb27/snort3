@@ -27,6 +27,10 @@
 #include "smtp_xlink2state.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "packet_io/active.h"
 
 #include "smtp_module.h"

@@ -25,12 +25,16 @@
 
 #include "codecs/codec_module.h"
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
 #endif
 
 using namespace snort;
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 
 EncState::EncState(const ip::IpApi& api, EncodeFlags f, IpProtocol pr,
     uint8_t t, uint16_t data_size) :
@@ -84,6 +88,12 @@ Buffer::Buffer(uint8_t* buf, uint32_t size) :
 
 void Codec::codec_event(const CodecData&, CodecSid sid)
 {
+<<<<<<< HEAD
+=======
+    if ( codec.codec_flags & CODEC_STREAM_REBUILT )
+        return;
+
+>>>>>>> offload
     DetectionEngine::queue_event(GID_DECODE, sid);
 }
 

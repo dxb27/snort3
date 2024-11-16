@@ -539,6 +539,14 @@ const uint8_t* MimeSession::process_mime_data_paf(
          * in the body which seems more reasonable. */
     }
 
+<<<<<<< HEAD
+=======
+    // FIXIT-L why is this being set?  we don't search file data until
+    // we set it again below after decoding.  can it be deleted?
+    if ( decode_conf && (!decode_conf->is_ignore_data()))
+        set_file_data(start, (end - start));
+
+>>>>>>> offload
     if (data_state == STATE_DATA_HEADER)
     {
         start = process_mime_header(p, start, end);

@@ -59,6 +59,7 @@ class SO_PUBLIC PacketManager
 public:
     static void global_init(uint8_t max_layers);
 
+<<<<<<< HEAD
     static void thread_init();
     static void thread_term();
 
@@ -66,6 +67,8 @@ public:
     static void decode(Packet*, const struct _daq_pkt_hdr*, const uint8_t* pkt,
         uint32_t pktlen, bool cooked = false, bool retry = false);
 
+=======
+>>>>>>> offload
     // update the packet's checksums and length variables. Call this function
     // after Snort has changed any data in this packet
     static void encode_update(Packet*);
@@ -102,6 +105,12 @@ public:
 
     /* codec support and statistics */
 
+<<<<<<< HEAD
+=======
+    // get the number of packets which have been rebuilt by this thread
+    static PegCount get_rebuilt_packet_count();
+
+>>>>>>> offload
     // get the max payload for the current packet
     static uint16_t encode_get_max_payload(const Packet*);
 

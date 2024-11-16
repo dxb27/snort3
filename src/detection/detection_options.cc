@@ -65,6 +65,16 @@
 
 using namespace snort;
 
+#include "detection_defines.h"
+#include "detection_engine.h"
+#include "detection_util.h"
+#include "fp_create.h"
+#include "fp_detect.h"
+#include "ips_context.h"
+#include "pattern_match_data.h"
+#include "rules.h"
+#include "treenodes.h"
+
 #define HASH_RULE_OPTIONS 16384
 #define HASH_RULE_TREE     8192
 
@@ -346,8 +356,28 @@ int detection_option_node_evaluate(
     auto& state = node->state[get_instance_id()];
     RuleContext profile(state);
 
+<<<<<<< HEAD
     uint64_t cur_eval_context_num = eval_data.p->context->context_num;
     auto p = eval_data.p;
+=======
+    int result = 0;
+    int rval = DETECTION_OPTION_NO_MATCH;
+    char tmp_noalert_flag = 0;
+    Cursor cursor = orig_cursor;
+    bool continue_loop = true;
+    char flowbits_setoperation = 0;
+    int loop_count = 0;
+    uint32_t tmp_byte_extract_vars[NUM_BYTE_EXTRACT_VARS];
+
+    uint64_t cur_eval_pkt_count = DetectionEngine::get_context()->pkt_count
+        + PacketManager::get_rebuilt_packet_count();
+
+    if ( !eval_data || !eval_data->p || !eval_data->pomd )
+        return 0;
+
+    auto p = eval_data->p;
+    auto pomd = eval_data->pomd;
+>>>>>>> offload
 
     // see if evaluated it before ...
     if ( !node->is_relative )
@@ -407,7 +437,11 @@ int detection_option_node_evaluate(
             SnortProtocolId snort_protocol_id = p->get_snort_protocol_id();
             int check_ports = 1;
 
+<<<<<<< HEAD
             if ( snort_protocol_id != UNKNOWN_PROTOCOL_ID )
+=======
+            if ( app_proto and ((OtnxMatchData*)(pomd))->check_ports != 2 )
+>>>>>>> offload
             {
                 const auto& sig_info = node->otn->sigInfo;
 
@@ -455,12 +489,18 @@ int detection_option_node_evaluate(
 
                     if ( !eval_data.flowbit_noalert )
                     {
+<<<<<<< HEAD
 #ifdef DEBUG_MSGS
                         const SigInfo& si = otn->sigInfo;
                         debug_logf(detection_trace, TRACE_RULE_EVAL, p,
                             "Matched rule gid:sid:rev %u:%u:%u\n", si.gid, si.sid, si.rev);
 #endif
                         fpAddMatch(p->context->otnx, otn);
+=======
+                        PatternMatchData* pmd = (PatternMatchData*)eval_data->pmd;
+                        int pattern_size = pmd ? pmd->pattern_size : 0;
+                        fpAddMatch((OtnxMatchData*)pomd, pattern_size, otn);
+>>>>>>> offload
                     }
                     result = rval = (int)IpsOption::MATCH;
                     eval_data.leaf_reached = 1;

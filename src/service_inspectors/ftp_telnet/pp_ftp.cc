@@ -28,9 +28,14 @@
 
 #include "pp_ftp.h"
 
+<<<<<<< HEAD
 #include "detection/detection_buf.h"
 #include "detection/detection_engine.h"
 #include "hash/hash_key_operations.h"
+=======
+#include "detection/detection_engine.h"
+#include "detection/detection_util.h"
+>>>>>>> offload
 #include "file_api/file_service.h"
 #include "protocols/packet.h"
 #include "pub_sub/opportunistic_tls_event.h"
@@ -923,12 +928,17 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
 
     if ( session->encr_state == NO_STATE )
     {
+<<<<<<< HEAD
         int iRet;
         char ignoreTelnetErase = FTPP_APPLY_TNC_ERASE_CMDS;
         /* Normalize this packet ala telnet */
         if ((iMode == FTPP_SI_CLIENT_MODE && session->client_conf->ignore_telnet_erase_cmds) ||
             (iMode == FTPP_SI_SERVER_MODE && session->server_conf->ignore_telnet_erase_cmds))
             ignoreTelnetErase = FTPP_IGNORE_TNC_ERASE_CMDS;
+=======
+        if (iRet == FTPP_ALERT)
+            DetectionEngine::queue_event(GID_FTP, FTP_EVASIVE_TELNET_CMD);
+>>>>>>> offload
 
         DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
@@ -936,10 +946,15 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
 
         if (iRet != FTPP_SUCCESS && iRet != FTPP_NORMALIZED)
         {
+<<<<<<< HEAD
             if (iRet == FTPP_ALERT)
                 DetectionEngine::queue_event(GID_FTP, FTP_EVASIVE_TELNET_CMD);
 
             return iRet;
+=======
+            DetectionEngine::queue_event(GID_FTP, FTP_TELNET_CMD);
+            return FTPP_ALERT; /* Nothing else to do since we alerted */
+>>>>>>> offload
         }
 
 
@@ -1299,6 +1314,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                 /* Could check that response msg includes "TLS" */
                 session->encr_state = AUTH_TLS_ENCRYPTED;
                 DetectionEngine::queue_event(GID_FTP, FTP_ENCRYPTED);
+<<<<<<< HEAD
+=======
+                DebugMessage(DEBUG_FTPTELNET, "FTP stream is now TLS encrypted\n");
+>>>>>>> offload
             }
             break;
         case AUTH_SSL_CMD_ISSUED:
@@ -1307,6 +1326,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                 /* Could check that response msg includes "SSL" */
                 session->encr_state = AUTH_SSL_ENCRYPTED;
                 DetectionEngine::queue_event(GID_FTP, FTP_ENCRYPTED);
+<<<<<<< HEAD
+=======
+                DebugMessage(DEBUG_FTPTELNET, "FTP stream is now SSL encrypted\n");
+>>>>>>> offload
             }
             break;
         case AUTH_UNKNOWN_CMD_ISSUED:
@@ -1314,6 +1337,10 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
             {
                 session->encr_state = AUTH_UNKNOWN_ENCRYPTED;
                 DetectionEngine::queue_event(GID_FTP, FTP_ENCRYPTED);
+<<<<<<< HEAD
+=======
+                DebugMessage(DEBUG_FTPTELNET, "FTP stream is now encrypted\n");
+>>>>>>> offload
             }
             break;
         }
@@ -1763,6 +1790,12 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                 {
                     /* Alert on param length overrun */
                     DetectionEngine::queue_event(GID_FTP, FTP_PARAMETER_LENGTH_OVERFLOW);
+<<<<<<< HEAD
+=======
+                    DebugFormat(DEBUG_FTPTELNET, "FTP command: %.*s"
+                        "parameter length overrun %u > %u \n",
+                        req->cmd_size, req->cmd_begin, req->param_size, max);
+>>>>>>> offload
                     iRet = FTPP_ALERT;
                 }
 

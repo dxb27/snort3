@@ -193,7 +193,11 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
 
 void do_detection(Packet* p)
 {
+<<<<<<< HEAD
     DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::ALT_PACKET, p);
+=======
+    get_data_bus().publish(PACKET_EVENT, p);
+>>>>>>> offload
     DetectionEngine::disable_all(p);
 }
 

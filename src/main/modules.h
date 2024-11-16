@@ -26,7 +26,11 @@
 
 #include "framework/counts.h"
 
+#include "main/snort_debug.h"
+
 void module_init();
 const char* get_lua_defaults();
+
+extern Trace TRACE_NAME(detection);  // FIXIT-L refactor detection module out
 
 #endif

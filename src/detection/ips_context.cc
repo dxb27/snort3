@@ -1,5 +1,9 @@
 //--------------------------------------------------------------------------
+<<<<<<< HEAD
 // Copyright (C) 2016-2024 Cisco and/or its affiliates. All rights reserved.
+=======
+// Copyright (C) 2016-2016 Cisco and/or its affiliates. All rights reserved.
+>>>>>>> offload
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -18,10 +22,16 @@
 
 // ips_context.cc author Russ Combs <rucombs@cisco.com>
 
+<<<<<<< HEAD
+=======
+#include "ips_context.h"
+
+>>>>>>> offload
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+<<<<<<< HEAD
 #include "ips_context.h"
 
 #include <cassert>
@@ -39,12 +49,39 @@
 #endif
 
 using namespace snort;
+=======
+#include <assert.h>
+#include "events/event_queue.h"
+#include "events/sfeventq.h"
+#include "main/snort_config.h"
+
+#include "fp_detect.h"
+
+#ifdef UNIT_TEST
+#include "catch/catch.hpp"
+#endif
+
+//--------------------------------------------------------------------------
+// context data
+//--------------------------------------------------------------------------
+
+// ips_id is not a member of context data so that
+// tests (and only tests) can reset the id
+static unsigned ips_id = 0;
+
+unsigned IpsContextData::get_ips_id()
+{ return ++ips_id; }
+
+unsigned IpsContextData::get_max_id()
+{ return ips_id; }
+>>>>>>> offload
 
 //--------------------------------------------------------------------------
 // context methods
 //--------------------------------------------------------------------------
 
 IpsContext::IpsContext(unsigned size) :
+<<<<<<< HEAD
     data(size ? size : max_ips_id, nullptr)
 {
     depends_on = nullptr;
@@ -52,22 +89,33 @@ IpsContext::IpsContext(unsigned size) :
 
     state = IDLE;
 
+=======
+    data(size ? size : IpsContextData::get_max_id() + 1, nullptr)
+{
+>>>>>>> offload
     packet = new Packet(false);
     encode_packet = nullptr;
 
     pkth = new DAQ_PktHdr_t;
     buf = new uint8_t[buf_size];
 
+<<<<<<< HEAD
     conf = SnortConfig::get_conf();
     const EventQueueConfig* qc = conf->event_queue_config;
+=======
+    const EventQueueConfig* qc = snort_conf->event_queue_config;
+>>>>>>> offload
     equeue = sfeventq_new(qc->max_events, qc->log_events, sizeof(EventNode));
 
     packet->context = this;
     fp_set_context(*this);
 
     active_rules = CONTENT;
+<<<<<<< HEAD
     check_tags = false;
     clear_inspectors = false;
+=======
+>>>>>>> offload
 }
 
 IpsContext::~IpsContext()
@@ -75,12 +123,17 @@ IpsContext::~IpsContext()
     for ( auto* p : data )
     {
         if ( p )
+<<<<<<< HEAD
         {
             p->clear();
             delete p;
         }
     }
     ids_in_use.clear();
+=======
+            delete p;
+    }
+>>>>>>> offload
 
     sfeventq_free(equeue);
     fp_clear_context(*this);
@@ -90,6 +143,7 @@ IpsContext::~IpsContext()
     delete packet;
 }
 
+<<<<<<< HEAD
 void IpsContext::setup()
 {
     conf = SnortConfig::get_conf();
@@ -117,11 +171,16 @@ void IpsContext::clear()
     matched_buffers.clear();
 }
 
+=======
+>>>>>>> offload
 void IpsContext::set_context_data(unsigned id, IpsContextData* cd)
 {
     assert(id < data.size());
     data[id] = cd;
+<<<<<<< HEAD
     ids_in_use.push_back(id);
+=======
+>>>>>>> offload
 }
 
 IpsContextData* IpsContext::get_context_data(unsigned id) const
@@ -130,6 +189,7 @@ IpsContextData* IpsContext::get_context_data(unsigned id) const
     return data[id];
 }
 
+<<<<<<< HEAD
 void IpsContext::snapshot_flow(Flow* f)
 {
     flow.session_flags = f->ssn_state.session_flags;
@@ -165,11 +225,14 @@ void IpsContext::disable_detection()
 void IpsContext::disable_inspection()
 { remove_gadget = true; }
 
+=======
+>>>>>>> offload
 //--------------------------------------------------------------------------
 // unit tests
 //--------------------------------------------------------------------------
 
 #ifdef UNIT_TEST
+<<<<<<< HEAD
 class TestData : public IpsContextData
 {
 public:
@@ -177,11 +240,21 @@ public:
     { ++count; }
 
     ~TestData() override
+=======
+class ContextData : public IpsContextData
+{
+public:
+    ContextData(int)
+    { ++count; }
+
+    ~ContextData()
+>>>>>>> offload
     { --count; }
 
     static int count;
 };
 
+<<<<<<< HEAD
 int TestData::count = 0;
 
 TEST_CASE("IpsContext basic", "[IpsContext]")
@@ -335,5 +408,38 @@ TEST_CASE("IpsContext Abort, [IpsContext]")
     CHECK(c2.dependencies() == nullptr);
     CHECK(c2.next() == nullptr);
 }
+=======
+int ContextData::count = 0;
+
+TEST_CASE("IpsContextData id", "[IpsContextData]")
+{
+    ips_id = 0;
+    CHECK(IpsContextData::get_max_id() == 0);
+
+    unsigned id1 = IpsContextData::get_ips_id();
+    unsigned id2 = IpsContextData::get_ips_id();
+    CHECK(id1 != id2);
+    
+    CHECK(IpsContextData::get_max_id() == id2);
+}
+
+TEST_CASE("IpsContext basic", "[IpsContext]")
+{
+    ips_id = 0;
+
+    SECTION("one context")
+    {
+#if 0
+        auto id = IpsContextData::get_ips_id();
+        auto* d1 = new ContextData(10);
+        auto ctxt = IpsContext(id+1);
+        ctxt.set_context_data(id, d1);
+        CHECK(ctxt.get_context_data(id) == d1);
+#endif
+    }
+    CHECK(ContextData::count == 0);
+}
+
+>>>>>>> offload
 #endif
 

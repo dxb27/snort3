@@ -28,7 +28,10 @@
 #include "dns.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
 #include "dns_config.h"
+=======
+>>>>>>> offload
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"

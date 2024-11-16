@@ -59,7 +59,11 @@ private:
         Fragment* left, Fragment** retFrag);
 
     int dup_frag_node(FragTracker*, Fragment* left, Fragment** retFrag);
+<<<<<<< HEAD
     int expired(snort::Packet*, FragTracker*, FragEngine*);
+=======
+    int expired(Packet*, FragTracker*, FragEngine*);
+>>>>>>> offload
 
 private:
     FragEngine& engine;

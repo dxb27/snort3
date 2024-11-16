@@ -25,8 +25,13 @@
 #include "dce_common.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
 #include "detection/extract.h"
+=======
+#include "ips_options/extract.h"
+>>>>>>> offload
 #include "log/messages.h"
+#include "main/snort_debug.h"
 #include "utils/safec.h"
 
 #include "dce_context_data.h"
@@ -141,13 +146,68 @@ bool dce2_paf_abort(DCE2_SsnData* sd)
 
 void reset_using_rpkt()
 {
+<<<<<<< HEAD
     using_rpkt = false;
+=======
+    DebugFormat(DEBUG_DCE_COMMON,
+        "  First frag: %s\n", ropts->first_frag == 1 ? "yes" : (ropts->first_frag == 0 ? "no" :
+        "unset"));
+    if (ropts->first_frag == DCE2_SENTINEL)
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "  Iface: unset\n");
+        DebugMessage(DEBUG_DCE_COMMON, "  Iface version: unset\n");
+    }
+    else
+    {
+        DebugFormat(DEBUG_DCE_COMMON, "  Iface: %s\n", DCE2_UuidToStr(&ropts->iface,
+            DCERPC_BO_FLAG__NONE));
+        DebugFormat(DEBUG_DCE_COMMON, "  Iface version: %hu\n", ropts->iface_vers_maj);
+    }
+    if (ropts->opnum == DCE2_SENTINEL)
+        DebugMessage(DEBUG_DCE_COMMON, "  Opnum: unset\n");
+    else
+    {
+        DebugFormat(DEBUG_DCE_COMMON, "  Opnum: %d\n", ropts->opnum);
+    }
+    if (ropts->stub_data != nullptr)
+        DebugFormat(DEBUG_DCE_COMMON, "  Stub data: %p\n", ropts->stub_data);
+    else
+    {
+        DebugMessage(DEBUG_DCE_COMMON, "  Stub data: NULL\n");
+    }
+}
+
+static void dce2_protocol_detect(DCE2_SsnData* sd, Packet* pkt)
+{
+    if (sd->trans == DCE2_TRANS_TYPE__TCP)
+    {
+        // FIXIT-M this doesn't look right; profile immediately goes out of scope
+        Profile profile(dce2_tcp_pstat_detect);
+    }
+    else if (sd->trans == DCE2_TRANS_TYPE__SMB)
+    {
+        Profile profile(dce2_smb_pstat_detect);
+    }
+    else
+    {
+        Profile profile(dce2_udp_pstat_detect);
+    }
+    // FIXIT-M add HTTP case when these are ported
+    // Same for all other instances of profiling
+
+    DetectionEngine::detect(pkt);
+
+    dce2_detected = 1;
+>>>>>>> offload
 }
 
 void DCE2_Detect(DCE2_SsnData* sd)
 {
+<<<<<<< HEAD
     if (!sd) return;
     DceContextData::set_current_ropts(sd);
+=======
+>>>>>>> offload
     if ( using_rpkt )
     {
         using_rpkt = false;
@@ -156,8 +216,24 @@ void DCE2_Detect(DCE2_SsnData* sd)
         return;
     }
     Packet* top_pkt = DetectionEngine::get_current_packet();
+<<<<<<< HEAD
     DetectionEngine::detect(top_pkt);
     dce2_detected = 1;
+=======
+
+    DCE2_PrintRoptions(&sd->ropts);
+    DebugMessage(DEBUG_DCE_COMMON, "Payload:\n");
+    DCE2_PrintPktData(top_pkt->data, top_pkt->dsize);
+
+    if (sd->ropts.stub_data != nullptr)
+    {
+        DebugMessage(DEBUG_DCE_COMMON,"\nStub data:\n");
+        DCE2_PrintPktData(sd->ropts.stub_data,
+            top_pkt->dsize - (sd->ropts.stub_data - top_pkt->data));
+    }
+
+    dce2_protocol_detect(sd, top_pkt);
+>>>>>>> offload
     /* Always reset rule option data after detecting */
     DCE2_ResetRopts(sd, top_pkt);
 }
@@ -227,9 +303,15 @@ bool DceEndianness::get_offset_endianness(int32_t offset, uint8_t& endian)
     return true;
 }
 
+<<<<<<< HEAD
 uint16_t DCE2_GetRpktMaxData(DCE2_RpktType rtype)
 {
     Packet* p = DetectionEngine::get_current_packet();
+=======
+uint16_t DCE2_GetRpktMaxData(DCE2_SsnData* sd, DCE2_RpktType rtype)
+{
+    Packet* p = sd->wire_pkt;
+>>>>>>> offload
     uint16_t overhead = 0;
 
     switch (rtype)
@@ -285,8 +367,12 @@ static void dce2_fill_rpkt_info(Packet* rpkt, Packet* p)
 Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
     const uint8_t* data, uint32_t data_len)
 {
+<<<<<<< HEAD
     Packet* rpkt = DetectionEngine::set_next_packet(p);
     uint8_t* wrdata = const_cast<uint8_t*>(rpkt->data);
+=======
+    Packet* rpkt = DetectionEngine::set_packet();
+>>>>>>> offload
     dce2_fill_rpkt_info(rpkt, p);
     uint16_t data_overhead = 0;
 
@@ -380,6 +466,10 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
         break;
 
     default:
+<<<<<<< HEAD
+=======
+        DebugFormat(DEBUG_DCE_COMMON, "Invalid reassembly packet type: %d\n",rpkt_type);
+>>>>>>> offload
         assert(false);
         return nullptr;
     }
@@ -389,6 +479,10 @@ Packet* DCE2_GetRpkt(Packet* p,DCE2_RpktType rpkt_type,
 
     if (data_len > Packet::max_dsize - data_overhead)
     {
+<<<<<<< HEAD
+=======
+        DebugMessage(DEBUG_DCE_COMMON, "Failed to create reassembly packet.\n");
+>>>>>>> offload
         delete rpkt->endianness;
         rpkt->endianness = nullptr;
         return nullptr;

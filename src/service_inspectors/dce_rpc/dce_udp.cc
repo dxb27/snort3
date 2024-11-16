@@ -31,10 +31,23 @@
 #include "dce_context_data.h"
 #include "dce_udp_module.h"
 
+<<<<<<< HEAD
 using namespace snort;
 
+=======
+>>>>>>> offload
 THREAD_LOCAL dce2UdpStats dce2_udp_stats;
 THREAD_LOCAL ProfileStats dce2_udp_pstat_main;
+<<<<<<< HEAD
+=======
+THREAD_LOCAL ProfileStats dce2_udp_pstat_session;
+THREAD_LOCAL ProfileStats dce2_udp_pstat_new_session;
+THREAD_LOCAL ProfileStats dce2_udp_pstat_detect;
+THREAD_LOCAL ProfileStats dce2_udp_pstat_log;
+THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_acts;
+THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_frag;
+THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_reass;
+>>>>>>> offload
 
 static void DCE2_ClCleanTracker(DCE2_ClTracker* clt)
 {
@@ -150,6 +163,11 @@ void Dce2Udp::eval(Packet* p)
         if (!dce2_detected)
             DCE2_Detect(&dce2_udp_sess->sd);
 
+<<<<<<< HEAD
+=======
+        DCE2_ResetRopts(&dce2_udp_sess->sd.ropts);
+
+>>>>>>> offload
         delete p->endianness;
         p->endianness = nullptr;
     }
@@ -197,6 +215,7 @@ static void dce2_udp_init()
     DceContextData::init(DCE2_TRANS_TYPE__UDP);
 }
 
+<<<<<<< HEAD
 static const char* dce2_udp_bufs[] =
 {
     "dce_iface",
@@ -205,6 +224,8 @@ static const char* dce2_udp_bufs[] =
     nullptr
 };
 
+=======
+>>>>>>> offload
 const InspectApi dce2_udp_api =
 {
     {

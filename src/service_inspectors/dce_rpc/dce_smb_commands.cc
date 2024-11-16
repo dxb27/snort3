@@ -430,6 +430,12 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
                     return DCE2_RET__ERROR;
                 }
 
+<<<<<<< HEAD
+=======
+                DebugMessage(DEBUG_DCE_SMB, "Reassembled WriteAndX raw mode request\n");
+                DCE2_PrintPktData(rpkt->data, rpkt->dsize);
+
+>>>>>>> offload
                 (void)DCE2_SmbProcessRequestData(ssd, fid, data_ptr, data_len, 0);
 
                 DCE2_BufferEmpty(ftracker->fp_writex_raw->buf);

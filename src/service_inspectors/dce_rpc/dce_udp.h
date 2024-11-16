@@ -65,7 +65,18 @@ struct dce2UdpStats
 };
 
 extern THREAD_LOCAL dce2UdpStats dce2_udp_stats;
+<<<<<<< HEAD
 extern THREAD_LOCAL snort::ProfileStats dce2_udp_pstat_main;
+=======
+extern THREAD_LOCAL ProfileStats dce2_udp_pstat_main;
+extern THREAD_LOCAL ProfileStats dce2_udp_pstat_session;
+extern THREAD_LOCAL ProfileStats dce2_udp_pstat_new_session;
+extern THREAD_LOCAL ProfileStats dce2_udp_pstat_detect;
+extern THREAD_LOCAL ProfileStats dce2_udp_pstat_log;
+extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_acts;
+extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_frag;
+extern THREAD_LOCAL ProfileStats dce2_udp_pstat_cl_reass;
+>>>>>>> offload
 
 struct DceRpcClHdr   /* Connectionless header */
 {

@@ -26,7 +26,11 @@
 #include "dnp3.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
 #include "log/messages.h"
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "protocols/packet.h"
 
 #include "dnp3_paf.h"

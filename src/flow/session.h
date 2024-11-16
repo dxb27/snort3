@@ -50,7 +50,11 @@ public:
     virtual void restart(snort::Packet*) { }
     virtual bool precheck(snort::Packet*) { return false; }
     virtual void clear() = 0;
+<<<<<<< HEAD
     virtual void cleanup(snort::Packet* = nullptr) { clear(); }
+=======
+    virtual void cleanup(Packet* = nullptr) { clear(); }
+>>>>>>> offload
 
     virtual bool add_alert(snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }
     virtual bool check_alerted(snort::Packet*, uint32_t /*gid*/, uint32_t /*sid*/) { return false; }

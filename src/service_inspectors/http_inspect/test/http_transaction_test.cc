@@ -42,7 +42,18 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace HttpEnums;
 
+<<<<<<< HEAD
 namespace snort
+=======
+// Stubs whose sole purpose is to make the test code link
+unsigned FlowData::flow_id = 0;
+FlowData::FlowData(unsigned, Inspector*) {}
+FlowData::~FlowData() {}
+int DetectionEngine::queue_event(unsigned int, unsigned int, RuleType) { return 0; }
+THREAD_LOCAL PegCount HttpModule::peg_counts[1];
+
+class HttpUnitTestSetup
+>>>>>>> offload
 {
 // Stubs whose sole purpose is to make the test code link
 unsigned FlowData::flow_data_id = 0;

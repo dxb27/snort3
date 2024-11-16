@@ -21,6 +21,10 @@
 #include "config.h"
 #endif
 
+<<<<<<< HEAD
+=======
+#include "detection/detection_defines.h"
+>>>>>>> offload
 #include "detection/detection_engine.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -135,7 +139,18 @@ IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
         flow->ssn_state.ignore_direction |= srod.direction;
         DetectionEngine::disable_all(pkt);
 
+<<<<<<< HEAD
         /* TBD: Set TF_FORCE_FLUSH ? */
+=======
+        if (srod.fastpath)
+        {
+            /* Turn off inspection */
+            lwssn->ssn_state.ignore_direction |= srod.direction;
+            DetectionEngine::disable_all(pkt);
+
+            /* TBD: Set TF_FORCE_FLUSH ? */
+        }
+>>>>>>> offload
     }
 
     if (srod.alert)
@@ -306,7 +321,10 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
     }
 #endif
     release_packet(pkt);
+<<<<<<< HEAD
     TcpNormalizerFactory::term();
+=======
+>>>>>>> offload
     delete flow;
     ips_stream_reassemble->mod_dtor(reassembler);
 }

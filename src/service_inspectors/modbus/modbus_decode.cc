@@ -26,6 +26,10 @@
 #include "modbus_decode.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "protocols/packet.h"
 
 #include "modbus.h"

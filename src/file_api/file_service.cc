@@ -46,6 +46,10 @@ bool FileService::file_signature_enabled = false;
 bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
 
+<<<<<<< HEAD
+=======
+FileEnforcer* FileService::file_enforcer = nullptr;
+>>>>>>> offload
 FileCache* FileService::file_cache = nullptr;
 DecodeConfig FileService::decode_conf;
 

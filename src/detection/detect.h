@@ -29,6 +29,7 @@ struct Packet;
 struct ProfileStats;
 }
 
+<<<<<<< HEAD
 struct ListHead;
 struct OptTreeNode;
 
@@ -37,6 +38,15 @@ extern THREAD_LOCAL snort::ProfileStats eventqPerfStats;
 // main loop hooks
 bool snort_ignore(snort::Packet*);
 bool snort_log(snort::Packet*);
+=======
+extern THREAD_LOCAL ProfileStats eventqPerfStats;
+extern THREAD_LOCAL ProfileStats detectPerfStats;
+extern THREAD_LOCAL ProfileStats rebuiltPacketPerfStats;
+
+// main loop hooks
+void snort_ignore(Packet*);
+void snort_log(Packet*);
+>>>>>>> offload
 
 // alerts
 void CallLogFuncs(snort::Packet*, ListHead*, class Event*, const char*);
@@ -44,7 +54,11 @@ void CallLogFuncs(snort::Packet*, const OptTreeNode*, ListHead*);
 void CallAlertFuncs(snort::Packet*, const OptTreeNode*, ListHead*);
 
 void enable_tags();
+<<<<<<< HEAD
 void check_tags(snort::Packet*);
+=======
+void check_tags(Packet*);
+>>>>>>> offload
 
 #endif
 

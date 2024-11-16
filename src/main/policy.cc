@@ -23,6 +23,7 @@
 
 #include "policy.h"
 
+<<<<<<< HEAD
 #include "daq_common.h"
 
 #include "detection/detection_engine.h"
@@ -32,6 +33,9 @@
 #include "js_norm/js_config.h"
 #include "log/messages.h"
 #include "main/thread_config.h"
+=======
+#include "detection/detection_engine.h"
+>>>>>>> offload
 #include "managers/inspector_manager.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
@@ -144,8 +148,13 @@ class AltPktHandler : public DataHandler
 public:
     AltPktHandler() : DataHandler("detection") { }
 
+<<<<<<< HEAD
     void handle(DataEvent& e, Flow*) override
     { DetectionEngine::detect(const_cast<Packet*>(e.get_packet())); }
+=======
+    void handle(DataEvent& e, Flow*)
+    { DetectionEngine::detect((Packet*)e.get_packet()); }  // FIXIT-L not const!
+>>>>>>> offload
 };
 
 InspectionPolicy::InspectionPolicy(PolicyId id)

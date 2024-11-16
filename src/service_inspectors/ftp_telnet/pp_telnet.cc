@@ -32,8 +32,13 @@
 
 #include "pp_telnet.h"
 
+<<<<<<< HEAD
 #include "detection/detection_buf.h"
 #include "detection/detection_engine.h"
+=======
+#include "detection/detection_engine.h"
+#include "detection/detection_util.h"
+>>>>>>> offload
 #include "protocols/packet.h"
 #include "stream/stream.h"
 

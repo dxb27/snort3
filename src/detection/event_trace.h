@@ -28,6 +28,31 @@
 #include "framework/ips_action.h"
 #include "main/snort_config.h"
 
+<<<<<<< HEAD:src/detection/event_trace.h
+=======
+#define DECODE_BLEN 65535
+
+struct DataPointer
+{
+    const uint8_t* data;
+    unsigned len;
+};
+
+struct DataBuffer
+{
+    uint8_t data[DECODE_BLEN];
+    unsigned len;
+};
+
+#define SetDetectLimit(pktPtr, altLen) \
+{ \
+    pktPtr->alt_dsize = altLen; \
+}
+
+#define IsLimitedDetect(pktPtr) (pktPtr->packet_flags & PKT_HTTP_DECODE)
+
+// FIXIT-L event trace should be placed in its own files
+>>>>>>> offload:src/detection/detection_util.h
 void EventTrace_Init();
 void EventTrace_Term();
 

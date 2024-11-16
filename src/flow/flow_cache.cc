@@ -412,6 +412,30 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
                     ++pruned;
             }
         }
+<<<<<<< HEAD
+=======
+#else
+        // Reached the current flow. This *should* be the newest flow
+        if ( flow == save_me )
+        {
+            // assert( flow->last_data_seen + config.pruning_timeout >= thetime );
+            // bool rv = hash_table->touch(); assert( !rv );
+            break;
+        }
+#endif
+        if ( flow->is_offloaded() )
+            break;
+
+        if ( flow->last_data_seen + config.pruning_timeout >= thetime )
+            break;
+
+        DebugMessage(DEBUG_STREAM, "pruning stale flow\n");
+        flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
+        release(flow, PruneReason::IDLE);
+        ++pruned;
+
+        flow = static_cast<Flow*>(hash_table->first());
+>>>>>>> offload
     }
 
     if ( PacketTracer::is_active() and pruned )
@@ -480,7 +504,12 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
         // EXCESS pruning will start from the allowlist LRU
         uint8_t lru_idx = allowlist_lru_index;
 
+<<<<<<< HEAD
         while ( true )
+=======
+        if ( (save_me and flow == save_me) or flow->was_blocked() or
+            flow->is_offloaded() )
+>>>>>>> offload
         {
             auto num_nodes = hash_table->get_num_nodes();
             if ( num_nodes <= max_cap or num_nodes <= blocks or
@@ -617,9 +646,17 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 #ifdef REG_TEST
     if ( hash_table->get_node_count(allowlist_lru_index) > 0 )
     {
+<<<<<<< HEAD
         uint64_t allowlist_timeout_count = 0;
         auto flow = static_cast<Flow*>(hash_table->lru_first(allowlist_lru_index));
         while ( flow )
+=======
+        if ( flow->last_data_seen + config.nominal_timeout > thetime )
+            break;
+
+        if ( HighAvailabilityManager::in_standby(flow) or
+            flow->is_offloaded() )
+>>>>>>> offload
         {
             if ( flow->last_data_seen + flow->idle_timeout > thetime )
                 allowlist_timeout_count++;

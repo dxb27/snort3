@@ -1,4 +1,4 @@
-Snort 3 can log IPS events with some meta data and dump packets. The Data
+x``Snort 3 can log IPS events with some meta data and dump packets. The Data
 Logging feature extends that ability to log protocol-specific data, sniffing
 traffic alongside with normal inspection.
 

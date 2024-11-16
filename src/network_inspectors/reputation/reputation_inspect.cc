@@ -25,7 +25,13 @@
 
 #include "reputation_inspect.h"
 
+<<<<<<< HEAD
 #include "detection/detection_engine.h"
+=======
+#include "detection/detect.h"
+#include "detection/detection_engine.h"
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -398,21 +404,44 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
     if (DECISION_NULL == decision)
     {
         return;
+<<<<<<< HEAD
+=======
+
+    else if (BLACKLISTED == decision)
+    {
+        DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_BLACKLIST);
+        Active::drop_packet(p, true);
+        // disable all preproc analysis and detection for this packet
+        DetectionEngine::disable_all(p);
+        p->disable_inspect = true;
+        if (p->flow)
+        {
+            p->flow->set_state(Flow::FlowState::BLOCK);
+            p->flow->disable_inspection();
+        }
+
+        reputationstats.blacklisted++;
+>>>>>>> offload
     }
 
     if (MONITORED_SRC == decision or MONITORED_DST == decision)
     {
+<<<<<<< HEAD
         unsigned monitor_event = (MONITORED_SRC == decision) ?
             REPUTATION_EVENT_MONITOR_SRC : REPUTATION_EVENT_MONITOR_DST;
 
         DetectionEngine::queue_event(GID_REPUTATION, monitor_event);
         ReputationVerdictEvent event(p, REP_VERDICT_MONITORED, iplist_id, MONITORED_SRC == decision);
         DataBus::publish(pub_id, ReputationEventIds::REP_MATCHED, event);
+=======
+        DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_MONITOR);
+>>>>>>> offload
         reputationstats.monitored++;
     }
 
     else if (TRUSTED_SRC == decision or TRUSTED_DST == decision)
     {
+<<<<<<< HEAD
         unsigned allowlist_event = (TRUSTED_SRC == decision) ?
             REPUTATION_EVENT_ALLOWLIST_SRC : REPUTATION_EVENT_ALLOWLIST_DST;
 
@@ -421,6 +450,18 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
         DataBus::publish(pub_id, ReputationEventIds::REP_MATCHED, event);
         act->trust_session(p, true);
         reputationstats.trusted++;
+=======
+        DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_WHITELIST);
+        p->packet_flags |= PKT_IGNORE;
+        DetectionEngine::disable_all(p);
+        p->disable_inspect = true;
+        if (p->flow)
+        {
+            p->flow->set_state(Flow::FlowState::ALLOW);
+            p->flow->disable_inspection();
+        }
+        reputationstats.whitelisted++;
+>>>>>>> offload
     }
 
     if (PacketTracer::is_daq_activated())

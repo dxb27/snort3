@@ -25,7 +25,11 @@
 
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
+<<<<<<< HEAD
 #include "framework/pig_pen.h"
+=======
+#include "main/snort.h"
+>>>>>>> offload
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "trace/trace_api.h"
@@ -136,10 +140,14 @@ void UserTracker::init()
 void UserTracker::term()
 {
     if ( splitter )
+<<<<<<< HEAD
     {
         splitter->go_away();
         splitter = nullptr;
     }
+=======
+        delete splitter;
+>>>>>>> offload
 
     for ( auto* p : seg_list )
         snort_free(p);
@@ -158,14 +166,22 @@ void UserTracker::detect(
 
     up->proto_bits = p->proto_bits;
     up->pseudo_type = PSEUDO_PKT_USER;
+<<<<<<< HEAD
     up->ptrs.set_pkt_type(PktType::PDU);
+=======
+>>>>>>> offload
 
     up->packet_flags = flags | PKT_REBUILT_STREAM | PKT_PSEUDO;
     up->packet_flags |= (p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER));
     up->packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 
+<<<<<<< HEAD
     debug_logf(stream_user_trace, up, "detect[%d]\n", up->dsize);
     PigPen::inspect_rebuilt(up);
+=======
+    trace_logf(stream_user, "detect[%d]\n", up->dsize);
+    Snort::inspect(up);
+>>>>>>> offload
 }
 
 int UserTracker::scan(Packet* p, uint32_t& flags)
@@ -173,6 +189,7 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
     if ( seg_list.empty() )
         return -1;
 
+    DetectionEngine::onload(p->flow);
     std::list<UserSegment*>::iterator it;
 
     for ( it = seg_list.begin(); it != seg_list.end(); ++it)
@@ -209,9 +226,16 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
 void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
 {
     unsigned bytes_flushed = 0;
+<<<<<<< HEAD
     debug_logf(stream_user_trace, p, "flush[%d]\n", flush_amt);
     uint32_t rflags = flags & ~PKT_PDU_TAIL;
     Packet* up = DetectionEngine::set_next_packet(p);
+=======
+    StreamBuffer sb = { nullptr, 0 };
+    trace_logf(stream_user, "flush[%d]\n", flush_amt);
+    uint32_t rflags = flags & ~PKT_PDU_TAIL;
+    Packet* up = DetectionEngine::set_packet();
+>>>>>>> offload
 
     while ( !seg_list.empty() and bytes_flushed < flush_amt )
     {
@@ -255,6 +279,8 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
 
 void UserTracker::process(Packet* p)
 {
+    DetectionEngine::onload(p->flow);
+
     uint32_t flags = 0;
     int flush_amt = scan(p, flags);
 
@@ -293,7 +319,11 @@ void UserTracker::add_data(Packet* p)
     if ( avail < p->dsize )
     {
         UserSegment* us = UserSegment::init(p->data+avail, p->dsize-avail);
+<<<<<<< HEAD
         seg_list.emplace_back(us);
+=======
+        seg_list.push_back(us);
+>>>>>>> offload
     }
     total += p->dsize;
     process(p);

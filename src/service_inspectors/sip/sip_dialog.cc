@@ -26,6 +26,10 @@
 #include "sip_dialog.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
+=======
+#include "events/event_queue.h"
+>>>>>>> offload
 #include "framework/data_bus.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
@@ -156,6 +160,12 @@ static int SIP_processInvite(const SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_D
     // check whether this invite has authorization information
     if ((SIP_DLG_AUTHENCATING != dialog->state) && (nullptr != sipMsg.authorization))
     {
+<<<<<<< HEAD
+=======
+        DebugFormat(DEBUG_SIP, "Dialog state code: %hu\n",
+            dialog->status_code);
+
+>>>>>>> offload
         DetectionEngine::queue_event(GID_SIP, SIP_EVENT_AUTH_INVITE_REPLAY_ATTACK);
         return false;
     }
@@ -174,7 +184,11 @@ static int SIP_processInvite(const SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_D
         ret = SIP_checkMediaChange(sipMsg, dialog);
         if (false == ret)
             DetectionEngine::queue_event(GID_SIP, SIP_EVENT_AUTH_INVITE_DIFF_SESSION);
+<<<<<<< HEAD
         SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
+=======
+        SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
+>>>>>>> offload
     }
     else if (SIP_DLG_TERMINATED == dialog->state)
     {

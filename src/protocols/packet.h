@@ -148,9 +148,15 @@ struct SO_PUBLIC Packet
     SFDAQInstance* daq_instance = nullptr;  // DAQ instance the message came from
 
     // Everything beyond this point is set by PacketManager::decode()
+<<<<<<< HEAD
     const DAQ_PktHdr_t* pkth;   // packet meta data
     const uint8_t* pkt;         // raw packet data
     uint32_t pktlen = 0;        // raw packet data length
+=======
+    class IpsContext* context;   // set by control
+    const DAQ_PktHdr_t* pkth;    // packet meta data
+    const uint8_t* pkt;          // raw packet data
+>>>>>>> offload
 
     // These are both set before PacketManager::decode() returns
     const uint8_t* data = nullptr;  /* packet payload pointer */

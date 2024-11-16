@@ -25,7 +25,10 @@
 #include "pop.h"
 
 #include "detection/detection_engine.h"
+<<<<<<< HEAD
 #include "js_norm/js_pdf_norm.h"
+=======
+>>>>>>> offload
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -387,7 +390,15 @@ static const uint8_t* POP_HandleCommand(Packet* p, POPData* pop_ssn, const uint8
                 DetectionEngine::queue_event(GID_POP, POP_UNKNOWN_CMD);
                 return ptr;
             }
+<<<<<<< HEAD
             DetectionEngine::queue_event(GID_POP, POP_UNKNOWN_CMD);
+=======
+        }
+        else
+        {
+            DetectionEngine::queue_event(GID_POP, POP_UNKNOWN_CMD);
+            DebugMessage(DEBUG_POP, "No known command found\n");
+>>>>>>> offload
             return eol;
         }
     }
@@ -538,6 +549,10 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
             else if (*ptr == '+')
             {
                 DetectionEngine::queue_event(GID_POP, POP_UNKNOWN_RESP);
+<<<<<<< HEAD
+=======
+                DebugMessage(DEBUG_POP, "Server response not found\n");
+>>>>>>> offload
             }
         }
 

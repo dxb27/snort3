@@ -88,6 +88,7 @@ struct OtnxMatchData
 {
     MatchInfo* matchInfo;
     bool have_match;
+<<<<<<< HEAD
 };
 
 int fpAddMatch(OtnxMatchData*, const OptTreeNode*);
@@ -99,6 +100,22 @@ void fp_full(snort::Packet*);
 void fp_partial(snort::Packet*);
 void fp_complete(snort::Packet*, bool search = false);
 void fp_eval_service_group(snort::Packet*, SnortProtocolId);
+=======
+
+    MatchInfo* matchInfo;
+    int iMatchInfoArraySize;
+};
+
+int fpAddMatch(OtnxMatchData*, int pLen, const OptTreeNode*);
+
+class IpsContext;
+void fp_set_context(IpsContext&);
+void fp_clear_context(IpsContext&);
+
+void fp_local(Packet*);
+void fp_offload(Packet*);
+void fp_onload(Packet*);
+>>>>>>> offload
 
 #endif
 

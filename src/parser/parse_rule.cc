@@ -54,8 +54,11 @@
 #include "parse_conf.h"
 #include "parse_ports.h"
 
+<<<<<<< HEAD
 using namespace snort;
 
+=======
+>>>>>>> offload
 #define SRC  0
 #define DST  1
 

@@ -26,8 +26,13 @@
 
 class ContextSwitcher;
 
+<<<<<<< HEAD
 namespace snort
 {
+=======
+#include "main/snort_types.h"
+
+>>>>>>> offload
 class Flow;
 class SFDAQInstance;
 struct Packet;
@@ -48,7 +53,30 @@ public:
     static bool is_exiting() { return already_exiting; }
     static bool is_reloading();
 
+<<<<<<< HEAD
     static unsigned get_process_id();
+=======
+    static bool thread_init_privileged(const char* intf);
+    static void thread_init_unprivileged();
+    static void thread_term();
+
+    static void thread_idle();
+    static void thread_rotate();
+
+    static void capture_packet();
+
+    static DAQ_Verdict process_packet(
+        Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, bool is_frag=false);
+
+    static DAQ_Verdict packet_callback(void*, const DAQ_PktHdr_t*, const uint8_t*);
+
+    static void inspect(Packet*);
+
+    static void set_main_hook(MainHook_f);
+    static class ContextSwitcher* get_switcher();
+
+    SO_PUBLIC static Packet* get_packet();
+>>>>>>> offload
 
 private:
     static void init(int, char**);
